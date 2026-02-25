@@ -41,6 +41,9 @@ docker exec -u hdfs spark-hadoop-namenode-1 hdfs dfs -chmod -R 777 /user /spark-
 - **What runs:** Spark driver logs job lifecycle; YARN logs application IDs
 - **HDFS audit:** `hdfs.audit.logger=INFO,RFAAUDIT` in hadoop-conf/log4j.properties
 - **Spark audit:** spark-logs/spark-audit.log — driver and application logs
+- **UI access logs:** HTTP request logging for all web UIs (NCSA format):
+  - hadoop-logs/jetty-namenode.log, jetty-datanode.log, jetty-resourcemanager.log, jetty-jobhistory.log, jetty-nodemanager.log
+  - spark-logs/jetty-access.log (Spark History Server and driver UI)
 
 ## Ports
 

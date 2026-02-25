@@ -9,7 +9,10 @@ services:
     image: ghcr.io/hadoop-sandbox/hadoop-hdfs-namenode:latest
     volumes:
       - ./hadoop-conf:/hadoop/etc/hadoop:ro
+      - ./hadoop-logs:/hadoop/logs
       - namenode:/data
+    environment:
+      HADOOP_LOG_DIR: /hadoop/logs
     restart: always
     init: true
     hostname: namenode
@@ -24,8 +27,11 @@ services:
     image: ghcr.io/hadoop-sandbox/hadoop-hdfs-datanode:latest
     volumes:
       - ./hadoop-conf:/hadoop/etc/hadoop:ro
+      - ./hadoop-logs:/hadoop/logs
       - hadoopnode:/data
       - dnsocket:/run/hadoop-hdfs
+    environment:
+      HADOOP_LOG_DIR: /hadoop/logs
     restart: always
     init: true
     ipc: shareable

@@ -6,3 +6,18 @@ spark-logs/*.log.*
 hadoop-logs/*.log
 hadoop-logs/*.log.*
 hadoop-logs/*.out
+
+# Cursor
+.cursor/
+
+## Python cache
+__pycache__/*
+tests/__pycache__/*
+.pytest_cache/*
+
+
+## Environment variables
+
+.venv/*
+.env
+

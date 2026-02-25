@@ -1,0 +1,7 @@
+# Spark logs (generated at runtime)
+spark-logs/*.log
+spark-logs/*.log.*
+
+# Hadoop logs
+hadoop-logs/*.log
+hadoop-logs/*.log.*

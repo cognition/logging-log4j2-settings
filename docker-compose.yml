@@ -1,0 +1,202 @@
+# Apache Spark 3.5.6 on YARN (no Hive)
+# Mounted conf and logs for logging practice
+# Based on hadoop-sandbox structure
+
+name: spark-hadoop
+
+services:
+  namenode:
+    image: ghcr.io/hadoop-sandbox/hadoop-hdfs-namenode:latest
+    volumes:
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
+      - namenode:/data
+    restart: always
+    init: true
+    hostname: namenode
+    healthcheck:
+      test: ["CMD", "bash", "-c", "curl -f http://localhost:9870/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+
+  datanode:
+    image: ghcr.io/hadoop-sandbox/hadoop-hdfs-datanode:latest
+    volumes:
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
+      - hadoopnode:/data
+      - dnsocket:/run/hadoop-hdfs
+    restart: always
+    init: true
+    ipc: shareable
+    hostname: hadoopnode
+    depends_on:
+      namenode:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bash", "-c", "curl -f http://localhost:9864/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+
+  resourcemanager:
+    image: ghcr.io/hadoop-sandbox/hadoop-yarn-resourcemanager:latest
+    volumes:
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
+      - ./hadoop-logs:/hadoop/logs
+    environment:
+      HADOOP_LOG_DIR: /hadoop/logs
+    restart: always
+    init: true
+    hostname: resourcemanager
+    depends_on:
+      namenode:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bash", "-c", "curl -f http://resourcemanager:8088/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+    ports:
+      - "8088:8088"  # YARN ResourceManager UI
+
+  nodemanager:
+    image: ghcr.io/hadoop-sandbox/hadoop-yarn-nodemanager-spark:latest
+    volumes:
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
+      - ./hadoop-logs:/hadoop/logs
+      - hadoopnode:/data
+      - dnsocket:/run/hadoop-hdfs
+    environment:
+      HADOOP_LOG_DIR: /hadoop/logs
+    restart: always
+    init: true
+    network_mode: service:datanode
+    ipc: service:datanode
+    security_opt:
+      - seccomp:unconfined
+    cap_add:
+      - SYS_ADMIN
+      - SYSLOG
+    depends_on:
+      namenode:
+        condition: service_healthy
+      datanode:
+        condition: service_healthy
+      resourcemanager:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bash", "-c", "curl -f http://localhost:8042/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+
+  jobhistoryserver:
+    image: ghcr.io/hadoop-sandbox/hadoop-mapred-jobhistoryserver:latest
+    volumes:
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
+      - ./hadoop-logs:/hadoop/logs
+    environment:
+      HADOOP_LOG_DIR: /hadoop/logs
+    restart: always
+    init: true
+    hostname: jobhistoryserver
+    depends_on:
+      namenode:
+        condition: service_healthy
+      resourcemanager:
+        condition: service_healthy
+      datanode:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bash", "-c", "curl -f http://jobhistoryserver:19888/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+    ports:
+      - "19888:19888"  # JobHistory UI
+
+  spark-history:
+    image: ghcr.io/hadoop-sandbox/spark-historyserver:latest
+    volumes:
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
+      - ./spark-conf:/spark/conf:ro
+      - ./spark-logs:/spark/logs
+      - ./hadoop-logs:/hadoop/logs
+    environment:
+      SPARK_CONF_DIR: /spark/conf
+      SPARK_LOG_DIR: /spark/logs
+    restart: always
+    init: true
+    hostname: sparkhistoryserver
+    depends_on:
+      namenode:
+        condition: service_healthy
+      resourcemanager:
+        condition: service_healthy
+      datanode:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bash", "-c", "curl -f http://sparkhistoryserver:18080/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+    ports:
+      - "18080:18080"  # Spark History Server
+
+  bootstrap:
+    image: ghcr.io/hadoop-sandbox/hadoop-hdfs-namenode:latest
+    volumes:
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
+    user: hdfs
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - "hdfs dfs -mkdir -p /spark-history /user/root /user/spark && hdfs dfs -chmod -R 777 /user /spark-history 2>/dev/null || true; exit 0"
+    depends_on:
+      namenode:
+        condition: service_healthy
+      datanode:
+        condition: service_healthy
+    restart: "no"
+
+  spark-client:
+    image: apache/spark:3.5.6
+    volumes:
+      - ./spark-conf:/opt/spark/conf
+      - ./hadoop-conf:/opt/spark/conf/hadoop:ro
+      - ./spark-logs:/opt/spark/logs
+    environment:
+      SPARK_CONF_DIR: /opt/spark/conf
+      SPARK_LOG_DIR: /opt/spark/logs
+      HADOOP_CONF_DIR: /opt/spark/conf/hadoop
+    working_dir: /opt/spark/work-dir
+    command: ["sleep", "infinity"]
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+      namenode:
+        condition: service_healthy
+      resourcemanager:
+        condition: service_healthy
+      datanode:
+        condition: service_healthy
+      nodemanager:
+        condition: service_healthy
+    networks:
+      - default
+    ports:
+      - "4040:4040"  # Spark driver UI (when job runs)
+
+networks:
+  default:
+    name: spark-hadoop_default
+
+volumes:
+  dnsocket:
+  hadoopnode:
+  namenode:

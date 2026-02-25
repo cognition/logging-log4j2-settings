@@ -136,6 +136,7 @@ services:
     environment:
       SPARK_CONF_DIR: /spark/conf
       SPARK_LOG_DIR: /spark/logs
+      HOSTNAME: sparkhistoryserver
     restart: always
     init: true
     hostname: sparkhistoryserver
@@ -172,6 +173,7 @@ services:
 
   spark-client:
     image: apache/spark:3.5.6
+    hostname: spark-client
     volumes:
       - ./spark-conf:/opt/spark/conf
       - ./hadoop-conf:/opt/spark/conf/hadoop:ro
@@ -180,6 +182,7 @@ services:
       SPARK_CONF_DIR: /opt/spark/conf
       SPARK_LOG_DIR: /opt/spark/logs
       HADOOP_CONF_DIR: /opt/spark/conf/hadoop
+      HOSTNAME: spark-client
     working_dir: /opt/spark/work-dir
     command: ["sleep", "infinity"]
     depends_on:

@@ -44,6 +44,24 @@ docker exec -u hdfs spark-hadoop-namenode-1 hdfs dfs -chmod -R 777 /user /spark-
 - **UI access logs:** HTTP request logging for all web UIs (NCSA format):
   - hadoop-logs/jetty-namenode.log, jetty-datanode.log, jetty-resourcemanager.log, jetty-jobhistory.log, jetty-nodemanager.log
   - spark-logs/jetty-access.log (Spark History Server and driver UI)
+- **Node identification:** All log lines include `[hostname]` prefix for SIEM correlation (e.g. `[namenode]`, `[resourcemanager]`, `[sparkhistoryserver]`)
+
+## Metrics
+
+- **Spark (built-in):** Prometheus metrics at `/metrics/prometheus` on driver (4040) and History Server (18080). Configured via `spark-conf/metrics.properties` and `spark.ui.prometheus.enabled=true`.
+- **Hadoop JMX Exporter:** Configs in `jmx-exporter-config/`; process documented in [docs/JMX_EXPORTER_SETUP.md](docs/JMX_EXPORTER_SETUP.md). Not implemented by default.
+- **hadoop-metrics2:** FileSink enabled; outputs to `hadoop-logs/*-metrics.out` (namenode, datanode, resourcemanager, nodemanager, jobhistoryserver).
+
+## Tests
+
+Log verification tests ensure logging captures the right events per Requirements.md:
+
+```bash
+pip install -r requirements-test.txt
+pytest tests/ -v
+```
+
+Requires the cluster to be running (`docker compose up -d`). See [tests/README.md](tests/README.md).
 
 ## Ports
 

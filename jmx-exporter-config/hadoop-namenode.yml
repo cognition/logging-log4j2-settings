@@ -1,0 +1,14 @@
+# Prometheus JMX Exporter config for Hadoop NameNode
+# Use with: -javaagent:jmx_prometheus_javaagent.jar=9090:this-file
+# See docs/JMX_EXPORTER_SETUP.md
+
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+
+# Scrape JVM and Hadoop NameNode MBeans
+# Hadoop exposes metrics under Hadoop:service=NameNode,name=*
+# JVM metrics under java.lang:*
+whitelistObjectNames:
+  - "java.lang:*"
+  - "Hadoop:service=NameNode,name=*"
+  - "Hadoop:service=NameNode,name=NameNodeStatus,*"

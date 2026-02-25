@@ -57,6 +57,9 @@
 # environment to ensure that logs are printed as expected.
 export LANG=en_US.UTF-8
 
+# Hostname for SIEM: pinpoint logs to individual nodes
+export HADOOP_OPTS="${HADOOP_OPTS:-} -Dlog4j.hostname=$(hostname)"
+
 # Location of Hadoop.  By default, Hadoop will attempt to determine
 # this location based upon its execution path.
 # export HADOOP_HOME=

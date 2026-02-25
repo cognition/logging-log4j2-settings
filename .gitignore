@@ -2,6 +2,7 @@
 spark-logs/*.log
 spark-logs/*.log.*
 
-# Hadoop logs
+# Hadoop logs and metrics
 hadoop-logs/*.log
 hadoop-logs/*.log.*
+hadoop-logs/*.out

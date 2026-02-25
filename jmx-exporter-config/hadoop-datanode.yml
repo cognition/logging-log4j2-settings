@@ -1,0 +1,10 @@
+# Prometheus JMX Exporter config for Hadoop DataNode
+# Use with: -javaagent:jmx_prometheus_javaagent.jar=9091:this-file
+# See docs/JMX_EXPORTER_SETUP.md
+
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+
+whitelistObjectNames:
+  - "java.lang:*"
+  - "Hadoop:service=DataNode,name=*"

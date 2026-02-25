@@ -9,6 +9,7 @@ Verifies that logging captures the right events per Requirements.md:
 - Metrics output
 """
 
+import json
 import os
 import subprocess
 import time
@@ -46,6 +47,17 @@ def _docker_compose_running() -> bool:
 @pytest.fixture(scope="session")
 def cluster_running():
     """Skip tests if cluster is not running."""
+    # #region agent log
+    _log_path = Path("/home/rbrooker/repo/spark-hadoop/.cursor/debug-733c0a.log")
+    try:
+        _files = [(p.name, p.stat().st_size) for p in HADOOP_LOGS.iterdir() if p.is_file()] if HADOOP_LOGS.exists() else []
+        with open(_log_path, "a", encoding="utf-8") as _lf:
+            _lf.write(
+                '{"sessionId":"733c0a","hypothesisId":"B","location":"conftest:cluster_running","message":"session start","data":{"REPO_ROOT":' + json.dumps(str(REPO_ROOT)) + ',"HADOOP_LOGS":' + json.dumps(str(HADOOP_LOGS)) + ',"hadoop_logs_files":' + json.dumps(_files) + '},"timestamp":' + str(int(time.time() * 1000)) + "}\n"
+            )
+    except OSError:
+        pass
+    # #endregion
     if not _docker_compose_running():
         pytest.skip("Docker compose stack not running. Start with: docker compose up -d")
     return True
@@ -65,6 +77,16 @@ def spark_logs(cluster_running):
 
 def read_log_tail(path: Path, lines: int = 500) -> str:
     """Read last N lines of a log file."""
+    # #region agent log
+    _log_path = Path("/home/rbrooker/repo/spark-hadoop/.cursor/debug-733c0a.log")
+    try:
+        with open(_log_path, "a", encoding="utf-8") as _lf:
+            _lf.write(
+                '{"sessionId":"733c0a","hypothesisId":"B","location":"conftest:read_log_tail","message":"read_log_tail called","data":{"path":str(path),"exists":path.exists(),"size":path.stat().st_size if path.exists() else 0},"timestamp":' + str(int(time.time() * 1000)) + "}\n"
+            )
+    except OSError:
+        pass
+    # #endregion
     if not path.exists():
         return ""
     try:

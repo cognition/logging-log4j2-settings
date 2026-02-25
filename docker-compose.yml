@@ -13,6 +13,7 @@ services:
       - namenode:/data
     environment:
       HADOOP_LOG_DIR: /hadoop/logs
+      HDFS_NAMENODE_OPTS: "-Dhdfs.audit.logger=INFO,RFAAUDIT -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1028"
     restart: always
     init: true
     hostname: namenode
@@ -53,12 +54,15 @@ services:
       - ./hadoop-logs:/hadoop/logs
     environment:
       HADOOP_LOG_DIR: /hadoop/logs
+      YARN_RESOURCEMANAGER_OPTS: "-Drm.audit.logger=INFO,RMAUDIT -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1026"
     restart: always
     init: true
     hostname: resourcemanager
     depends_on:
       namenode:
         condition: service_healthy
+      log-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "bash", "-c", "curl -f http://resourcemanager:8088/ || exit 1"]
       interval: 30s
@@ -156,6 +160,18 @@ services:
     ports:
       - "18080:18080"  # Spark History Server
 
+  log-init:
+    image: busybox:latest
+    volumes:
+      - ./hadoop-logs:/logs
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - "touch /logs/rm-audit.log && chmod 666 /logs/rm-audit.log; exit 0"
+    depends_on:
+      namenode:
+        condition: service_healthy
+    restart: "no"
+
   bootstrap:
     image: ghcr.io/hadoop-sandbox/hadoop-hdfs-namenode:latest
     volumes:
@@ -169,6 +185,8 @@ services:
         condition: service_healthy
       datanode:
         condition: service_healthy
+      log-init:
+        condition: service_completed_successfully
     restart: "no"
 
   spark-client:

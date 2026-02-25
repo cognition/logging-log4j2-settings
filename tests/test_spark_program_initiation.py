@@ -7,6 +7,7 @@ Verifies that:
 - YARN logs application submissions with user
 """
 
+import json
 import subprocess
 import time
 from pathlib import Path
@@ -64,11 +65,25 @@ class TestSparkAuditLogs:
         """YARN ResourceManager logs application submission."""
         run_spark_submit()
         time.sleep(5)
-        # YARN RM logs to yarn-*-resourcemanager-*.log or hadoop.log
-        yarn_logs = list((REPO_ROOT / "hadoop-logs").glob("*resourcemanager*.log"))
-        yarn_logs.extend((REPO_ROOT / "hadoop-logs").glob("yarn*.log"))
+        # YARN RM logs to rm-audit.log, rm-appsummary.log, or hadoop.log
+        logs_dir = REPO_ROOT / "hadoop-logs"
+        yarn_logs = []
+        for pattern in ["rm-audit.log", "rm-appsummary.log", "hadoop.log", "*resourcemanager*.log", "yarn*.log"]:
+            yarn_logs.extend(logs_dir.glob(pattern))
+        yarn_logs = list(dict.fromkeys(yarn_logs))  # deduplicate
         if not yarn_logs:
-            yarn_logs = list((REPO_ROOT / "hadoop-logs").glob("*.log"))
+            yarn_logs = list(logs_dir.glob("*.log"))
+        # #region agent log
+        _log_path = Path("/home/rbrooker/repo/spark-hadoop/.cursor/debug-733c0a.log")
+        try:
+            _info = [(str(p), p.stat().st_size) for p in yarn_logs[:5]]
+            with open(_log_path, "a", encoding="utf-8") as _lf:
+                _lf.write(
+                    '{"sessionId":"733c0a","hypothesisId":"D","location":"test_spark:yarn_logs","message":"yarn glob","data":{"yarn_logs":' + json.dumps(_info) + '},"timestamp":' + str(int(time.time() * 1000)) + "}\n"
+                )
+        except OSError:
+            pass
+        # #endregion
         content = ""
         for p in yarn_logs[:3]:
             content += read_log_tail(p, 100)

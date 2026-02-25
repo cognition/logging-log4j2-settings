@@ -21,8 +21,8 @@ from conftest import NAMENODE_CONTAINER, REPO_ROOT, read_log_tail
 
 @pytest.fixture
 def hdfs_audit_log():
-    """Path to HDFS audit log."""
-    return REPO_ROOT / "hadoop-logs" / "hdfs-audit.log"
+    """Path to HDFS audit log (per-hostname to avoid RM/NN conflict)."""
+    return REPO_ROOT / "hadoop-logs" / "hdfs-audit-namenode.log"
 
 
 def run_hdfs_cmd(cmd: List[str]) -> subprocess.CompletedProcess:

@@ -35,9 +35,11 @@ docker exec -u hdfs spark-hadoop-namenode-1 hdfs dfs -chmod -R 777 /user /spark-
 | Path | Purpose |
 |------|---------|
 | `spark-conf/` | Mounted to `/opt/spark/conf` — log4j2.properties, spark-defaults.conf |
-| `spark-logs/` | Mounted to `/opt/spark/logs` — Spark driver/executor logs |
-| `hadoop-conf/` | Mounted to `/hadoop/etc/hadoop` — YARN, HDFS config (from hadoop-sandbox) |
-| `hadoop-logs/` | Mounted to `/hadoop/logs` — YARN, HDFS logs |
+| `spark-logs/` | Mounted to `$LOG_DIR` (default `/opt/spark/logs` or `/spark/logs`) — Spark driver/executor logs |
+| `hadoop-conf/` | Mounted to `/hadoop/etc/hadoop` — YARN, HDFS config (from hadoop-sandbox). Uses Log4j 2 (`log4j2.properties`) |
+| `hadoop-logs/` | Mounted to `$LOG_DIR` (default `/hadoop/logs`) — YARN, HDFS logs |
+
+**Log directory:** All services use the `LOG_DIR` environment variable. Defaults: `$HADOOP_HOME/logs` (or `/hadoop/logs`) for Hadoop; `$SPARK_HOME/logs` (or `/opt/spark/logs`) for Spark.
 | `scripts/fetch-hadoop-conf.sh` | Fetches Hadoop config from hadoop-sandbox |
 | `scripts/test-spark-yarn.sh` | Submits Spark Pi example to YARN |
 
@@ -45,7 +47,7 @@ docker exec -u hdfs spark-hadoop-namenode-1 hdfs dfs -chmod -R 777 /user /spark-
 
 - **Who submits:** YARN ResourceManager logs application submissions with user
 - **What runs:** Spark driver logs job lifecycle; YARN logs application IDs
-- **HDFS audit:** `hdfs.audit.logger=INFO,RFAAUDIT` in hadoop-conf/log4j.properties
+- **HDFS audit:** `hdfs.audit.logger=INFO,RFAAUDIT` in hadoop-conf/log4j2.properties
 - **Spark audit:** spark-logs/spark-audit.log — driver and application logs
 - **UI access logs:** HTTP request logging for all web UIs (NCSA format):
   - hadoop-logs/jetty-namenode.log, jetty-datanode.log, jetty-resourcemanager.log, jetty-jobhistory.log, jetty-nodemanager.log

@@ -15,7 +15,7 @@ This guide explains **every configuration line** in this project. It is written 
 | `spark-conf/log4j2.properties` | Spark logging (console, audit file, UI access) | Change log levels, add appenders |
 | `spark-conf/spark-defaults.conf` | Spark runtime settings (master, event log, etc.) | Change cluster mode, memory, history |
 | `spark-conf/metrics.properties` | Spark Prometheus metrics | Add/change metrics sinks |
-| `hadoop-conf/log4j.properties` | Hadoop logging (HDFS, YARN, audit, UI) | Change log levels, audit settings |
+| `hadoop-conf/log4j2.properties` | Hadoop logging (HDFS, YARN, audit, UI) | Change log levels, audit settings |
 | `hadoop-conf/core-site.xml` | Hadoop core settings (HDFS URI, temp dir) | Change cluster hostnames |
 | `hadoop-conf/hdfs-site.xml` | HDFS-specific settings | Replication, NameNode address |
 | `hadoop-conf/yarn-site.xml` | YARN cluster settings | ResourceManager host, log aggregation |
@@ -30,7 +30,7 @@ This guide explains **every configuration line** in this project. It is written 
 |----------|----------|
 | [LOG_SCENARIOS.md](LOG_SCENARIOS.md) | **Scenarios:** What happens and what you see in the logs (job submission, CRUD, startup, failures) |
 | [SPARK_CONF.md](SPARK_CONF.md) | Line-by-line: `log4j2.properties`, `spark-defaults.conf`, `metrics.properties` |
-| [HADOOP_CONF.md](HADOOP_CONF.md) | Line-by-line: `log4j.properties`, `core-site.xml`, `hdfs-site.xml`, `yarn-site.xml`, `mapred-site.xml`, `hadoop-env.sh`, `hadoop-metrics2.properties` |
+| [HADOOP_CONF.md](HADOOP_CONF.md) | Line-by-line: `log4j2.properties`, `core-site.xml`, `hdfs-site.xml`, `yarn-site.xml`, `mapred-site.xml`, `hadoop-env.sh`, `hadoop-metrics2.properties` |
 | [DOCKER_COMPOSE.md](DOCKER_COMPOSE.md) | Line-by-line: `docker-compose.yml` |
 | [SCRIPTS.md](SCRIPTS.md) | Line-by-line: `fetch-hadoop-conf.sh`, `test-spark-yarn.sh` |
 
@@ -40,8 +40,7 @@ This guide explains **every configuration line** in this project. It is written 
 - **Apache Hadoop Common (core-site)**: <https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/core-default.html>
 - **Apache Hadoop HDFS**: <https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/hdfs-default.xml>
 - **Apache Hadoop YARN**: <https://hadoop.apache.org/docs/current/hadoop-yarn/hadoop-yarn-common/yarn-default.xml>
-- **Log4j 2.x (Spark)**: <https://logging.apache.org/log4j/2.x/manual/configuration.html>
-- **Log4j 1.x (Hadoop)**: <https://logging.apache.org/log4j/1.2/manual.html>
+- **Log4j 2.x (Spark and Hadoop)**: <https://logging.apache.org/log4j/2.x/manual/configuration.html>
 - **Docker Compose**: <https://docs.docker.com/compose/compose-file/>
 
 ## Glossary (Non-Java Terms)
@@ -53,5 +52,6 @@ This guide explains **every configuration line** in this project. It is written 
 | **JVM** | Java Virtual Machine — the runtime that runs Java code |
 | **Daemon** | A background service (e.g., NameNode, ResourceManager) |
 | **RPC** | Remote Procedure Call — how services talk over the network |
+| **LOG_DIR** | Standardized env var for log directory. Default: `$HADOOP_HOME/logs` or `$SPARK_HOME/logs` |
 | **SIEM** | Security Information and Event Management — log aggregation for security |
 | **JMX** | Java Management Extensions — monitoring/metrics interface |

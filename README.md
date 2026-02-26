@@ -26,7 +26,9 @@ docker exec -u hdfs spark-hadoop-namenode-1 hdfs dfs -chmod -R 777 /user /spark-
 
 ## Documentation
 
-**Line-by-line configuration guide** for system administrators: [docs/CONFIGURATION_GUIDE.md](docs/CONFIGURATION_GUIDE.md). Explains every setting with references and a glossary.
+**Documentation for system administrators:**
+- [Configuration guide](docs/CONFIGURATION_GUIDE.md) — line-by-line config reference with glossary
+- [Log scenarios](docs/LOG_SCENARIOS.md) — what happens and what you see in the logs (job submission, CRUD, startup, failures)
 
 ## Layout
 

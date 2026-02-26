@@ -24,6 +24,10 @@ docker exec -u hdfs spark-hadoop-namenode-1 hdfs dfs -mkdir -p /user/spark /spar
 docker exec -u hdfs spark-hadoop-namenode-1 hdfs dfs -chmod -R 777 /user /spark-history
 ```
 
+## Documentation
+
+**Line-by-line configuration guide** for system administrators: [docs/CONFIGURATION_GUIDE.md](docs/CONFIGURATION_GUIDE.md). Explains every setting with references and a glossary.
+
 ## Layout
 
 | Path | Purpose |

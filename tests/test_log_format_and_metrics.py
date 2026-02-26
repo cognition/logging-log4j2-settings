@@ -4,8 +4,6 @@ Tests for log format (hostname prefix, SIEM correlation) and metrics output.
 Per Requirements.md: node identification for SIEM; metrics for Prometheus.
 """
 
-import json
-import time
 from pathlib import Path
 
 import pytest
@@ -18,7 +16,9 @@ class TestHostnamePrefix:
 
     def test_hdfs_audit_has_hostname_prefix(self, cluster_running):
         """HDFS audit log has [hostname] prefix."""
-        path = REPO_ROOT / "hadoop-logs" / "hdfs-audit-namenode.log"
+        logs_dir = REPO_ROOT / "hadoop-logs"
+        candidates = [p for p in logs_dir.glob("hdfs-audit*.log") if p.stat().st_size > 0]
+        path = candidates[0] if candidates else logs_dir / "hdfs-audit.log"
         if path.exists():
             content = read_log_tail(path, 5)
             if content:
@@ -32,16 +32,6 @@ class TestHostnamePrefix:
             content = read_log_tail(path, 5)
             if content:
                 line = content.strip().split("\n")[0]
-                # #region agent log
-                _log_path = Path("/home/rbrooker/repo/spark-hadoop/.cursor/debug-733c0a.log")
-                try:
-                    with open(_log_path, "a", encoding="utf-8") as _lf:
-                        _lf.write(
-                            '{"sessionId":"733c0a","hypothesisId":"E","location":"test_log_format:spark_audit","message":"spark first line","data":{"first_line":' + json.dumps(line[:200]) + ',"starts_with_bracket":' + str(line.startswith("[")) + '},"timestamp":' + str(int(time.time() * 1000)) + "}\n"
-                        )
-                except OSError:
-                    pass
-                # #endregion
                 assert line.startswith("["), "Spark audit should start with [hostname]"
 
 

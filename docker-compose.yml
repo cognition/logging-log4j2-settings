@@ -5,15 +5,32 @@
 name: spark-hadoop
 
 services:
+  log-init:
+    image: busybox:latest
+    volumes:
+      - ./logs:/logs
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        mkdir -p /logs/namenode /logs/hadoopnode /logs/resourcemanager /logs/jobhistoryserver /logs/sparkhistoryserver /logs/spark-client /logs/hdfs-container-logs
+        chmod -R 777 /logs
+        touch /logs/resourcemanager/rm-audit.log && chmod 666 /logs/resourcemanager/rm-audit.log
+        exit 0
+    restart: "no"
+
   namenode:
     image: ghcr.io/hadoop-sandbox/hadoop-hdfs-namenode:latest
     volumes:
       - ./hadoop-conf:/hadoop/etc/hadoop:ro
       - ./logs/namenode:/logs
       - namenode:/data
+    depends_on:
+      log-init:
+        condition: service_completed_successfully
     environment:
       LOG_DIR: /logs
-      HDFS_NAMENODE_OPTS: "-Dhdfs.audit.logger=INFO,RFAAUDIT -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1028"
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2.properties"
+      HADOOP_DAEMON_ROOT_LOGGER: "INFO,RFA"
     restart: always
     init: true
     hostname: namenode
@@ -33,11 +50,15 @@ services:
       - dnsocket:/run/hadoop-hdfs
     environment:
       LOG_DIR: /logs
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2.properties"
+      HADOOP_DAEMON_ROOT_LOGGER: "INFO,RFA"
     restart: always
     init: true
     ipc: shareable
     hostname: hadoopnode
     depends_on:
+      log-init:
+        condition: service_completed_successfully
       namenode:
         condition: service_healthy
     healthcheck:
@@ -54,7 +75,8 @@ services:
       - ./logs/resourcemanager:/logs
     environment:
       LOG_DIR: /logs
-      YARN_RESOURCEMANAGER_OPTS: "-Drm.audit.logger=INFO,RMAUDIT -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1026"
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2.properties"
+      YARN_ROOT_LOGGER: "INFO,RFA"
     restart: always
     init: true
     hostname: resourcemanager
@@ -81,6 +103,8 @@ services:
       - dnsocket:/run/hadoop-hdfs
     environment:
       LOG_DIR: /logs
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2.properties"
+      YARN_ROOT_LOGGER: "INFO,RFA"
     restart: always
     init: true
     network_mode: service:datanode
@@ -111,6 +135,8 @@ services:
       - ./logs/jobhistoryserver:/logs
     environment:
       LOG_DIR: /logs
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2.properties"
+      HADOOP_DAEMON_ROOT_LOGGER: "INFO,RFA"
     restart: always
     init: true
     hostname: jobhistoryserver
@@ -131,15 +157,17 @@ services:
       - "19888:19888"  # JobHistory UI
 
   spark-history:
-    image: ghcr.io/hadoop-sandbox/spark-historyserver:latest
+    image: apache/spark:3.5.6
     volumes:
-      - ./hadoop-conf:/hadoop/etc/hadoop:ro
-      - ./spark-conf:/spark/conf:ro
+      - ./hadoop-conf:/opt/spark/conf/hadoop:ro
+      - ./spark-conf:/opt/spark/conf:ro
       - ./logs/sparkhistoryserver:/logs
     environment:
-      SPARK_CONF_DIR: /spark/conf
+      SPARK_CONF_DIR: /opt/spark/conf
+      HADOOP_CONF_DIR: /opt/spark/conf/hadoop
       LOG_DIR: /logs
       HOSTNAME: sparkhistoryserver
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.history.HistoryServer"]
     restart: always
     init: true
     hostname: sparkhistoryserver
@@ -158,22 +186,6 @@ services:
       start_period: 2m
     ports:
       - "18080:18080"  # Spark History Server
-
-  log-init:
-    image: busybox:latest
-    volumes:
-      - ./logs:/logs
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        mkdir -p /logs/namenode /logs/hadoopnode /logs/resourcemanager /logs/jobhistoryserver /logs/sparkhistoryserver /logs/spark-client /logs/hdfs-container-logs
-        chmod -R 777 /logs
-        touch /logs/resourcemanager/rm-audit.log && chmod 666 /logs/resourcemanager/rm-audit.log
-        exit 0
-    depends_on:
-      namenode:
-        condition: service_healthy
-    restart: "no"
 
   hdfs-log-sync:
     image: apache/spark:3.5.6

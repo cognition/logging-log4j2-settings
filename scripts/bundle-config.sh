@@ -53,6 +53,11 @@ if [[ -d jmx-exporter-config ]]; then
   cp -r jmx-exporter-config "$TMP_DIR/$BUNDLE_NAME/"
 fi
 
+# Azure DCR for HDFS logs
+if [[ -d azure ]]; then
+  cp -r azure "$TMP_DIR/$BUNDLE_NAME/"
+fi
+
 # Ansible role and playbook
 if [[ -d ansible ]]; then
   cp -r ansible "$TMP_DIR/$BUNDLE_NAME/"

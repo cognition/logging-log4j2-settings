@@ -1,0 +1,70 @@
+// =============================================================================
+// Incident Detection — Failures, OOM, Permission Denied, Errors
+// =============================================================================
+// Use these queries for alerting, dashboards, or manual investigation.
+// Combine with Azure Monitor alert rules for automated notification.
+// =============================================================================
+
+// --- HDFS container logs: Critical failures ---
+// OOM, uncaught exceptions, container killed
+HDFSYarnContainerLogs_CL
+| where TimeGenerated > ago(24h)
+| where RawData contains "OutOfMemoryError" 
+    or RawData contains "exit code 137"
+    or RawData contains "Container killed"
+    or RawData contains "FATAL"
+    or RawData contains "java.lang.OutOfMemoryError"
+| project TimeGenerated, Computer, RawData
+| order by TimeGenerated desc
+
+// --- HDFS container logs: Exception summary ---
+// Group by exception type for pattern analysis
+HDFSYarnContainerLogs_CL
+| where TimeGenerated > ago(7d)
+| where RawData contains "Exception" or RawData contains "Error"
+| extend ExceptionType = extract(@"(\w+Exception|\w+Error)", 1, RawData)
+| where isnotempty(ExceptionType)
+| summarize Count = count(), Sample = take_any(RawData, 1) by ExceptionType, Computer
+| order by Count desc
+
+// --- Host logs: Permission denied (HDFS) ---
+// allowed=false in hdfs-audit
+HadoopLogs_CL
+| where TimeGenerated > ago(7d)
+| where RawData contains "allowed=false" and RawData contains "ugi="
+| project TimeGenerated, Computer, RawData
+| order by TimeGenerated desc
+
+// --- Host logs: YARN/Spark submission failures ---
+// RESULT=FAILURE or ERROR in rm-audit / spark-audit
+HadoopLogs_CL
+| where TimeGenerated > ago(24h)
+| where (FilePath contains "rm-audit" or FilePath contains "spark-audit")
+    and (RawData contains "RESULT=FAILURE" or RawData contains "ERROR" or RawData contains "Exception")
+| project TimeGenerated, Computer, FilePath, RawData
+| order by TimeGenerated desc
+
+// --- Host logs: Connection refused / service down ---
+// Typical when RM or NM is down
+HadoopLogs_CL
+| where TimeGenerated > ago(24h)
+| where RawData contains "Connection refused" 
+    or RawData contains "Failed to connect"
+    or RawData contains "ApplicationMaster not registered"
+| project TimeGenerated, Computer, RawData
+| order by TimeGenerated desc
+
+// --- Host logs: Disk full / no space ---
+HadoopLogs_CL
+| where TimeGenerated > ago(7d)
+| where RawData contains "No space left" or RawData contains "Disk full" or RawData contains "ENOSPC"
+| project TimeGenerated, Computer, RawData
+| order by TimeGenerated desc
+
+// --- Alert threshold: Error count per hour ---
+// Use with Azure Monitor alert: "when count > N"
+HDFSYarnContainerLogs_CL
+| where TimeGenerated > ago(1h)
+| where RawData contains "ERROR" or RawData contains "Exception" or RawData contains "OOM"
+| summarize ErrorCount = count() by bin(TimeGenerated, 1h)
+| where ErrorCount > 1

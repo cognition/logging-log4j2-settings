@@ -1,0 +1,68 @@
+// =============================================================================
+// Audit Logs — HDFS, YARN RM, Spark
+// =============================================================================
+// Source: Host logs (hdfs-audit-*.log, rm-audit.log, spark-audit.log).
+// Table: Replace HadoopLogs_CL with your table name. If using separate tables,
+//       use HDFSAudit_CL, RMAudit_CL, SparkAudit_CL and adjust FilePath filters.
+// Use for: Who did what, when; job submissions; HDFS operations; security.
+// =============================================================================
+
+// --- YARN application submissions (from rm-audit.log) ---
+// Look for: USER=, OPERATION=Submit Application Request, APPID=
+// Replace RMAudit_CL with your table, or use FilePath contains "rm-audit"
+HadoopLogs_CL
+| where TimeGenerated > ago(24h)
+| where FilePath contains "rm-audit" or RawData contains "OPERATION=Submit Application Request"
+| extend User = extract(@"USER=(\S+)", 1, RawData)
+| extend AppId = extract(@"APPID=(application_\d+_\d+)", 1, RawData)
+| extend Operation = extract(@"OPERATION=([^\s]+)", 1, RawData)
+| project TimeGenerated, Computer, User, AppId, Operation, RawData
+| order by TimeGenerated desc
+
+// --- HDFS operations (from hdfs-audit-*.log) ---
+// Look for: ugi=, cmd=, src=, allowed=
+// Replace with your table; filter by FilePath contains "hdfs-audit"
+HadoopLogs_CL
+| where TimeGenerated > ago(24h)
+| where FilePath contains "hdfs-audit" or RawData contains "cmd="
+| extend User = extract(@"ugi=(\S+)", 1, RawData)
+| extend Cmd = extract(@"cmd=(\S+)", 1, RawData)
+| extend Allowed = extract(@"allowed=(true|false)", 1, RawData)
+| extend Src = extract(@"src=([^\s]+)", 1, RawData)
+| project TimeGenerated, Computer, User, Cmd, Allowed, Src, RawData
+| order by TimeGenerated desc
+
+// --- HDFS permission denied ---
+// allowed=false indicates access was denied
+HadoopLogs_CL
+| where TimeGenerated > ago(7d)
+| where (FilePath contains "hdfs-audit" or RawData contains "cmd=") and RawData contains "allowed=false"
+| project TimeGenerated, Computer, RawData
+| order by TimeGenerated desc
+
+// --- Spark job lifecycle (from spark-audit.log) ---
+// Look for: Submitted application, Job finished, SparkContext stopped
+HadoopLogs_CL
+| where TimeGenerated > ago(24h)
+| where FilePath contains "spark-audit" or RawData contains "[Audit][Spark]"
+| extend AppName = extract(@"Submitted application:\s*(\S+)", 1, RawData)
+| extend Event = case(
+    RawData contains "Submitted application", "Submitted",
+    RawData contains "Job finished", "JobFinished",
+    RawData contains "Successfully stopped SparkContext", "Stopped",
+    RawData contains "ERROR", "Error",
+    "Other")
+| project TimeGenerated, Computer, Event, AppName, RawData
+| order by TimeGenerated desc
+
+// --- Application ID correlation across audit logs ---
+// Use APPID from rm-audit to correlate with HDFS paths (staging) and container logs
+HadoopLogs_CL
+| where TimeGenerated > ago(24h)
+| where RawData contains "application_" and (RawData contains "APPID=" or RawData contains ".sparkStaging")
+| extend AppId = extract(@"APPID=(application_\d+_\d+)", 1, RawData)
+| extend AppId2 = extract(@"(application_\d+_\d+)", 1, RawData)
+| extend AppId = iff(isnotempty(AppId), AppId, AppId2)
+| project TimeGenerated, Computer, FilePath, AppId, RawData
+| where isnotempty(AppId)
+| order by TimeGenerated desc

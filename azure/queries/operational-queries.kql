@@ -1,0 +1,82 @@
+// =============================================================================
+// Operational Queries — Dashboards, Counts, Trends
+// =============================================================================
+// Use for: Capacity planning, workload trends, health overview.
+// =============================================================================
+
+// --- HDFS container logs: Volume over time ---
+HDFSYarnContainerLogs_CL
+| where TimeGenerated > ago(7d)
+| summarize RecordCount = count(), UniqueComputers = dcount(Computer) by bin(TimeGenerated, 1h)
+| order by TimeGenerated desc
+
+// --- HDFS container logs: Records by host ---
+HDFSYarnContainerLogs_CL
+| where TimeGenerated > ago(24h)
+| summarize RecordCount = count() by Computer
+| order by RecordCount desc
+
+// --- Host logs: Job submissions per day ---
+// From rm-audit: Submit Application Request
+HadoopLogs_CL
+| where TimeGenerated > ago(30d)
+| where RawData contains "OPERATION=Submit Application Request"
+| summarize SubmissionCount = count() by bin(TimeGenerated, 1d)
+| order by TimeGenerated desc
+
+// --- Host logs: HDFS operations by command ---
+HadoopLogs_CL
+| where TimeGenerated > ago(7d)
+| where FilePath contains "hdfs-audit" or RawData contains "cmd="
+| extend Cmd = extract(@"cmd=(\S+)", 1, RawData)
+| where isnotempty(Cmd)
+| summarize OpCount = count() by Cmd
+| order by OpCount desc
+
+// --- Host logs: Top users (HDFS) ---
+HadoopLogs_CL
+| where TimeGenerated > ago(7d)
+| where RawData contains "ugi="
+| extend User = extract(@"ugi=(\S+)", 1, RawData)
+| where isnotempty(User) and User != "null"
+| summarize OpCount = count() by User
+| order by OpCount desc
+
+// --- Host logs: Top users (YARN submissions) ---
+HadoopLogs_CL
+| where TimeGenerated > ago(7d)
+| where RawData contains "USER=" and RawData contains "OPERATION=Submit"
+| extend User = extract(@"USER=(\S+)", 1, RawData)
+| where isnotempty(User)
+| summarize SubmissionCount = count() by User
+| order by SubmissionCount desc
+
+// --- UI access: Requests per hour by UI ---
+HadoopLogs_CL
+| where TimeGenerated > ago(24h)
+| where FilePath contains "jetty"
+| extend UI = case(
+    FilePath contains "namenode", "NameNode",
+    FilePath contains "resourcemanager", "ResourceManager",
+    FilePath contains "jobhistory", "JobHistory",
+    FilePath contains "nodemanager", "NodeManager",
+    FilePath contains "datanode", "DataNode",
+    "Spark UI")
+| summarize RequestCount = count() by UI, bin(TimeGenerated, 1h)
+| order by TimeGenerated desc, RequestCount desc
+
+// --- Combined: Recent activity summary ---
+// Requires both HDFSYarnContainerLogs_CL and HadoopLogs_CL. Remove if you only have one.
+union (
+    HDFSYarnContainerLogs_CL
+    | where TimeGenerated > ago(1h)
+    | summarize Count = count() by bin(TimeGenerated, 15m)
+    | extend Source = "ContainerLogs"
+),
+(
+    HadoopLogs_CL
+    | where TimeGenerated > ago(1h)
+    | summarize Count = count() by bin(TimeGenerated, 15m)
+    | extend Source = "HostLogs"
+)
+| order by TimeGenerated desc

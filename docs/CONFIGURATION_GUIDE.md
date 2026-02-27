@@ -33,10 +33,10 @@ This guide explains **every configuration line** in this project. It is written 
 | [LOGGING_TOGGLES.md](LOGGING_TOGGLES.md) | **Toggles:** Per-component enable/disable; LOG_DIR; MapReduce, Router, NM audit |
 | [SYSLOG_SETUP.md](SYSLOG_SETUP.md) | **Syslog:** Enable syslog variants; host/port/facility; rsyslog example |
 | [LOG_SCENARIOS.md](LOG_SCENARIOS.md) | **Scenarios:** What happens and what you see in the logs (job submission, CRUD, startup, failures) |
+| [SCRIPTS.md](SCRIPTS.md) | **Scripts:** fetch-hadoop-conf.sh, test-spark-yarn.sh, bundle-config.sh (deploy tar) |
 | [SPARK_CONF.md](SPARK_CONF.md) | Line-by-line: `log4j2.properties`, `spark-defaults.conf`, `metrics.properties` |
 | [HADOOP_CONF.md](HADOOP_CONF.md) | Line-by-line: `log4j2.properties`, `core-site.xml`, `hdfs-site.xml`, `yarn-site.xml`, `mapred-site.xml`, `hadoop-env.sh`, `hadoop-metrics2.properties` |
 | [DOCKER_COMPOSE.md](DOCKER_COMPOSE.md) | Line-by-line: `docker-compose.yml` |
-| [SCRIPTS.md](SCRIPTS.md) | Line-by-line: `fetch-hadoop-conf.sh`, `test-spark-yarn.sh` |
 
 ## Official References
 

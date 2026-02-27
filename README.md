@@ -18,6 +18,8 @@ docker compose up -d
 ./scripts/test-spark-yarn.sh
 ```
 
+**Bundle for deployment:** Run `./scripts/bundle-config.sh` to create `spark-hadoop-config-YYYYMMDD.tar.gz` with configs, scripts, and docs. Extract on target host, run `fetch-hadoop-conf.sh`, then `docker compose up -d`.
+
 **Migration from hadoop-logs/spark-logs:** If upgrading from an older layout, copy existing logs into `logs/` and remove the old directories.
 
 If you see "Permission denied: user=spark" when submitting, create HDFS dirs once:
@@ -41,6 +43,7 @@ docker exec -u hdfs spark-hadoop-namenode-1 hdfs dfs -chmod -R 777 /user /spark-
 | `logs/` | Mounted to `/logs` — **unified** log directory for all components (HDFS, YARN, Spark). Set via `LOG_DIR`. |
 | `scripts/fetch-hadoop-conf.sh` | Fetches Hadoop config from hadoop-sandbox |
 | `scripts/test-spark-yarn.sh` | Submits Spark Pi example to YARN |
+| `scripts/bundle-config.sh` | Bundles configs into a tar for deployment to another system |
 
 ## Logging
 

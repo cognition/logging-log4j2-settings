@@ -52,3 +52,18 @@ Submits a sample Spark job (Pi estimation) to YARN. Used to verify the cluster a
 - `./scripts/fetch-hadoop-conf.sh` (Hadoop config present)
 
 **Override container name**: `SPARK_CLIENT_CONTAINER=my-spark-client ./scripts/test-spark-yarn.sh`
+
+---
+
+## scripts/bundle-config.sh
+
+Bundles Spark/Hadoop configuration for deployment to another system. Creates `spark-hadoop-config-YYYYMMDD.tar.gz` with configs, scripts, docs. Excludes logs, .git, tests.
+
+| Usage | What It Does |
+|-------|--------------|
+| `./scripts/bundle-config.sh` | Creates tar.gz in project root |
+| `./scripts/bundle-config.sh /path/to/dir` | Creates tar.gz in specified directory |
+
+**Bundle contents:** docker-compose.yml, hadoop-conf/, spark-conf/, scripts/, docs/, jmx-exporter-config/, README.md, empty logs/ with .gitkeep, DEPLOY.md. Optional hive-conf/, hbase-conf/, pig-conf/ when present.
+
+**On target host:** `tar -xzf spark-hadoop-config-*.tar.gz && cd spark-hadoop-config-* && ./scripts/fetch-hadoop-conf.sh && chmod 777 logs && docker compose up -d`

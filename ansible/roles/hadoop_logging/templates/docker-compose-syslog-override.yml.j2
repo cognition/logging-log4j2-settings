@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  namenode:
+    environment:
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2-syslog.properties -Dsyslog.host={{ syslog_host }} -Dsyslog.port={{ syslog_port }} -Dsyslog.protocol={{ syslog_protocol }} -Dsyslog.facility={{ syslog_facility }}"
+
+  resourcemanager:
+    environment:
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2-syslog.properties -Dsyslog.host={{ syslog_host }} -Dsyslog.port={{ syslog_port }} -Dsyslog.protocol={{ syslog_protocol }} -Dsyslog.facility={{ syslog_facility }}"
+
+  jobhistoryserver:
+    environment:
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2-syslog.properties -Dsyslog.host={{ syslog_host }} -Dsyslog.port={{ syslog_port }} -Dsyslog.protocol={{ syslog_protocol }} -Dsyslog.facility={{ syslog_facility }}"
+
+  spark-history:
+    environment:
+      SPARK_DAEMON_JAVA_OPTS: "-Dlog4j.configurationFile=file:/opt/spark/conf/log4j2-syslog.properties -Dsyslog.host={{ syslog_host }} -Dsyslog.port={{ syslog_port }} -Dsyslog.protocol={{ syslog_protocol }} -Dsyslog.facility={{ syslog_facility }}"
+
+  spark-client:
+    environment:
+      SPARK_SUBMIT_OPTS: "-Dlog4j.configurationFile=file:/opt/spark/conf/log4j2-syslog.properties -Dsyslog.host={{ syslog_host }} -Dsyslog.port={{ syslog_port }} -Dsyslog.protocol={{ syslog_protocol }} -Dsyslog.facility={{ syslog_facility }}"
+

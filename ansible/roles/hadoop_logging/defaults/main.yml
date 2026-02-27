@@ -1,0 +1,23 @@
+---
+# Unified log directory (on target host)
+log_dir: /logs
+
+# Deploy path for configs (on target host)
+hadoop_logging_deploy_path: "{{ playbook_dir | default('.') }}/.."
+
+# Source path for configs (bundle root)
+hadoop_logging_config_source: "{{ playbook_dir | default('.') }}/../.."
+
+# Copy configs from source to deploy_path
+hadoop_logging_copy_configs: true
+
+# Syslog settings
+hadoop_logging_syslog_enabled: false
+syslog_host: localhost
+syslog_port: "514"
+syslog_protocol: UDP
+syslog_facility: LOCAL1
+
+# Docker deployment toggle (if using docker-compose on target)
+hadoop_logging_docker_deploy: false
+

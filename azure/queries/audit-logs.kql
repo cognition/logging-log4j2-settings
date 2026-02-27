@@ -1,0 +1,28 @@
+// HDFS, YARN, Hive, and JobHistory audit logs
+
+// HDFS audit
+HadoopLogs_CL
+| where TimeGenerated > ago(24h)
+| where FilePath contains "hdfs-audit"
+| project TimeGenerated, Computer, RawData
+
+// YARN RM audit
+HadoopLogs_CL
+| where TimeGenerated > ago(24h)
+| where FilePath contains "rm-audit"
+| extend User = extract(@"USER=(\S+)", 1, RawData)
+| extend AppId = extract(@"APPID=(application_\d+_\d+)", 1, RawData)
+| project TimeGenerated, Computer, User, AppId, RawData
+
+// JobHistory audit
+HadoopLogs_CL
+| where TimeGenerated > ago(24h)
+| where FilePath contains "hs-audit"
+| project TimeGenerated, Computer, RawData
+
+// Hive audit
+HadoopLogs_CL
+| where TimeGenerated > ago(24h)
+| where FilePath contains "hive-audit"
+| project TimeGenerated, Computer, RawData
+

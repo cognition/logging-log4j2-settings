@@ -1,0 +1,4 @@
+---
+# Handlers (optional) for restarting services when configs change.
+# Concrete restart tasks are left to the user/environment.
+

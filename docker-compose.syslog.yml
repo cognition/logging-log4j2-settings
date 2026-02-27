@@ -1,0 +1,25 @@
+version: "3.9"
+
+name: hadoop-logging-syslog
+
+services:
+  namenode:
+    environment:
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2-syslog.properties -Dsyslog.host=${SYSLOG_HOST:-localhost} -Dsyslog.port=${SYSLOG_PORT:-514} -Dsyslog.protocol=${SYSLOG_PROTOCOL:-UDP} -Dsyslog.facility=${SYSLOG_FACILITY:-LOCAL1}"
+
+  resourcemanager:
+    environment:
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2-syslog.properties -Dsyslog.host=${SYSLOG_HOST:-localhost} -Dsyslog.port=${SYSLOG_PORT:-514} -Dsyslog.protocol=${SYSLOG_PROTOCOL:-UDP} -Dsyslog.facility=${SYSLOG_FACILITY:-LOCAL1}"
+
+  jobhistoryserver:
+    environment:
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2-syslog.properties -Dsyslog.host=${SYSLOG_HOST:-localhost} -Dsyslog.port=${SYSLOG_PORT:-514} -Dsyslog.protocol=${SYSLOG_PROTOCOL:-UDP} -Dsyslog.facility=${SYSLOG_FACILITY:-LOCAL1}"
+
+  spark-history:
+    environment:
+      SPARK_DAEMON_JAVA_OPTS: "-Dlog4j.configurationFile=file:/opt/spark/conf/log4j2-syslog.properties -Dsyslog.host=${SYSLOG_HOST:-localhost} -Dsyslog.port=${SYSLOG_PORT:-514} -Dsyslog.protocol=${SYSLOG_PROTOCOL:-UDP} -Dsyslog.facility=${SYSLOG_FACILITY:-LOCAL1}"
+
+  spark-client:
+    environment:
+      SPARK_SUBMIT_OPTS: "-Dlog4j.configurationFile=file:/opt/spark/conf/log4j2-syslog.properties -Dsyslog.host=${SYSLOG_HOST:-localhost} -Dsyslog.port=${SYSLOG_PORT:-514} -Dsyslog.protocol=${SYSLOG_PROTOCOL:-UDP} -Dsyslog.facility=${SYSLOG_FACILITY:-LOCAL1}"
+

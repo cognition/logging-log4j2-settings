@@ -1,0 +1,10 @@
+// Example operational queries for Hadoop ecosystem logs
+
+// Error count by component
+HadoopLogs_CL
+| where TimeGenerated > ago(24h)
+| where RawData contains "ERROR"
+| extend Component = tostring(split(FilePath, "/")[-1])
+| summarize ErrorCount = count() by Component
+| order by ErrorCount desc
+

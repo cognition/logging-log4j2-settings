@@ -1,0 +1,300 @@
+version: "3.9"
+
+name: hadoop-logging
+
+services:
+  log-init:
+    image: busybox:latest
+    volumes:
+      - ./logs:/logs
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        mkdir -p
+        /logs/namenode
+        /logs/hadoopnode
+        /logs/resourcemanager
+        /logs/jobhistoryserver
+        /logs/sparkhistoryserver
+        /logs/spark-client
+        /logs/hive
+        /logs/hdfs-container-logs
+        && chmod -R 777 /logs
+        && exit 0
+    restart: "no"
+
+  namenode:
+    image: ghcr.io/hadoop-sandbox/hadoop-hdfs-namenode:latest
+    hostname: namenode
+    init: true
+    restart: always
+    volumes:
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
+      - ./logs/namenode:/logs
+      - namenode:/data
+    environment:
+      LOG_DIR: /logs
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2.properties"
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
+    depends_on:
+      log-init:
+        condition: service_completed_successfully
+
+  datanode:
+    image: ghcr.io/hadoop-sandbox/hadoop-hdfs-datanode:latest
+    hostname: hadoopnode
+    init: true
+    restart: always
+    ipc: shareable
+    volumes:
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
+      - ./logs/hadoopnode:/logs
+      - hadoopnode:/data
+      - dnsocket:/run/hadoop-hdfs
+    environment:
+      LOG_DIR: /logs
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2.properties"
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
+    depends_on:
+      log-init:
+        condition: service_completed_successfully
+      namenode:
+        condition: service_started
+
+  resourcemanager:
+    image: ghcr.io/hadoop-sandbox/hadoop-yarn-resourcemanager:latest
+    hostname: resourcemanager
+    init: true
+    restart: always
+    ports:
+      - "8088:8088"
+    volumes:
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
+      - ./logs/resourcemanager:/logs
+    environment:
+      LOG_DIR: /logs
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2.properties"
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
+    depends_on:
+      log-init:
+        condition: service_completed_successfully
+      namenode:
+        condition: service_started
+
+  nodemanager:
+    image: ghcr.io/hadoop-sandbox/hadoop-yarn-nodemanager-spark:latest
+    hostname: hadoopnode
+    init: true
+    restart: always
+    network_mode: service:datanode
+    ipc: service:datanode
+    security_opt:
+      - seccomp:unconfined
+    cap_add:
+      - SYS_ADMIN
+      - SYSLOG
+    volumes:
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
+      - ./logs/hadoopnode:/logs
+      - hadoopnode:/data
+      - dnsocket:/run/hadoop-hdfs
+    environment:
+      LOG_DIR: /logs
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2.properties"
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
+    depends_on:
+      namenode:
+        condition: service_started
+      datanode:
+        condition: service_started
+      resourcemanager:
+        condition: service_started
+
+  jobhistoryserver:
+    image: ghcr.io/hadoop-sandbox/hadoop-mapred-jobhistoryserver:latest
+    hostname: jobhistoryserver
+    init: true
+    restart: always
+    ports:
+      - "19888:19888"
+    volumes:
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
+      - ./logs/jobhistoryserver:/logs
+    environment:
+      LOG_DIR: /logs
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2.properties"
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
+    depends_on:
+      namenode:
+        condition: service_started
+      resourcemanager:
+        condition: service_started
+      datanode:
+        condition: service_started
+
+  spark-history:
+    image: apache/spark:3.5.6
+    hostname: sparkhistoryserver
+    init: true
+    restart: always
+    ports:
+      - "18080:18080"
+    volumes:
+      - ./hadoop-conf:/opt/spark/conf/hadoop:ro
+      - ./spark-conf:/opt/spark/conf:ro
+      - ./logs/sparkhistoryserver:/logs
+    environment:
+      SPARK_CONF_DIR: /opt/spark/conf
+      HADOOP_CONF_DIR: /opt/spark/conf/hadoop
+      LOG_DIR: /logs
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.history.HistoryServer"]
+    depends_on:
+      namenode:
+        condition: service_started
+      resourcemanager:
+        condition: service_started
+      datanode:
+        condition: service_started
+
+  spark-client:
+    image: apache/spark:3.5.6
+    hostname: spark-client
+    init: true
+    restart: always
+    working_dir: /opt/spark/work-dir
+    command: ["sleep", "infinity"]
+    ports:
+      - "4040:4040"
+    volumes:
+      - ./spark-conf:/opt/spark/conf
+      - ./hadoop-conf:/opt/spark/conf/hadoop:ro
+      - ./logs/spark-client:/logs
+    environment:
+      SPARK_CONF_DIR: /opt/spark/conf
+      HADOOP_CONF_DIR: /opt/spark/conf/hadoop
+      LOG_DIR: /logs
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
+
+  hive-metastore:
+    image: ghcr.io/hadoop-sandbox/hive-metastore:latest
+    hostname: hive-metastore
+    init: true
+    restart: always
+    volumes:
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
+      - ./hive-conf:/opt/hive/conf:ro
+      - ./logs/hive:/logs
+    environment:
+      LOG_DIR: /logs
+      HIVE_CONF_DIR: /opt/hive/conf
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
+    depends_on:
+      namenode:
+        condition: service_started
+
+  hive-server:
+    image: ghcr.io/hadoop-sandbox/hive-server2:latest
+    hostname: hiveserver2
+    init: true
+    restart: always
+    ports:
+      - "10000:10000"
+    volumes:
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
+      - ./hive-conf:/opt/hive/conf:ro
+      - ./logs/hive:/logs
+    environment:
+      LOG_DIR: /logs
+      HIVE_CONF_DIR: /opt/hive/conf
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
+    depends_on:
+      hive-metastore:
+        condition: service_started
+
+  bootstrap:
+    image: ghcr.io/hadoop-sandbox/hadoop-hdfs-namenode:latest
+    hostname: bootstrap
+    user: hdfs
+    init: true
+    restart: "no"
+    volumes:
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - >
+        hdfs dfs -mkdir -p /spark-history /user/root /user/spark /user/hive/warehouse
+        && hdfs dfs -chmod -R 777 /user /spark-history /user/hive
+        || true;
+        exit 0
+    depends_on:
+      namenode:
+        condition: service_started
+      datanode:
+        condition: service_started
+      log-init:
+        condition: service_completed_successfully
+
+  hdfs-log-sync:
+    image: apache/spark:3.5.6
+    hostname: hdfs-log-sync
+    init: true
+    restart: unless-stopped
+    volumes:
+      - ./hadoop-conf:/opt/spark/conf/hadoop:ro
+      - ./logs:/logs
+      - ./scripts:/scripts:ro
+    environment:
+      HADOOP_CONF_DIR: /opt/spark/conf/hadoop
+      HDFS_LOG_DIR: /tmp/logs
+      OUTPUT_DIR: /logs/hdfs-container-logs
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - "while true; do /scripts/sync-hdfs-logs-to-local.sh; sleep 300; done"
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+      namenode:
+        condition: service_started
+
+volumes:
+  dnsocket:
+  hadoopnode:
+  namenode:
+

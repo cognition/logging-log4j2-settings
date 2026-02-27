@@ -1,0 +1,4 @@
+{
+  "note": "Placeholder DCR definition. Configure inputs to collect logs from the logs/ directory and map to HadoopLogs_CL and HDFSYarnContainerLogs_CL."
+}
+

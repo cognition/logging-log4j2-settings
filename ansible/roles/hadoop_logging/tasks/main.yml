@@ -1,0 +1,40 @@
+---
+- name: Ensure deploy path exists
+  ansible.builtin.file:
+    path: "{{ hadoop_logging_deploy_path }}"
+    state: directory
+    mode: "0755"
+
+- name: Ensure hadoop-conf exists at deploy path
+  ansible.builtin.file:
+    path: "{{ hadoop_logging_deploy_path }}/hadoop-conf"
+    state: directory
+    mode: "0755"
+
+- name: Ensure log directory exists at deploy path
+  ansible.builtin.file:
+    path: "{{ hadoop_logging_deploy_path }}/logs"
+    state: directory
+    mode: "0777"
+
+- name: Copy hadoop-conf when configured
+  ansible.builtin.copy:
+    src: "{{ hadoop_logging_config_source }}/hadoop-conf/"
+    dest: "{{ hadoop_logging_deploy_path }}/hadoop-conf/"
+    mode: "0644"
+  when: hadoop_logging_copy_configs | bool
+
+- name: Copy spark-conf when configured
+  ansible.builtin.copy:
+    src: "{{ hadoop_logging_config_source }}/spark-conf/"
+    dest: "{{ hadoop_logging_deploy_path }}/spark-conf/"
+    mode: "0644"
+  when: hadoop_logging_copy_configs | bool
+
+- name: Deploy docker-compose syslog override when syslog enabled (Docker targets)
+  ansible.builtin.template:
+    src: docker-compose-syslog-override.yml.j2
+    dest: "{{ hadoop_logging_deploy_path }}/docker-compose.syslog.yml"
+    mode: "0644"
+  when: hadoop_logging_syslog_enabled | bool and hadoop_logging_docker_deploy | bool
+

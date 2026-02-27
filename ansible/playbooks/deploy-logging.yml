@@ -1,0 +1,7 @@
+---
+- name: Deploy Hadoop logging configuration
+  hosts: localhost
+  connection: local
+  roles:
+    - role: hadoop_logging
+

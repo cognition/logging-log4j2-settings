@@ -1,0 +1,6 @@
+// HDFS/YARN container and task logs
+
+HDFSYarnContainerLogs_CL
+| where TimeGenerated > ago(24h)
+| project TimeGenerated, RawData
+

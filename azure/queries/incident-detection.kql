@@ -1,0 +1,15 @@
+// Incident detection queries
+
+// Permission denied (HDFS)
+HadoopLogs_CL
+| where TimeGenerated > ago(7d)
+| where FilePath contains "hdfs-audit" and RawData contains "allowed=false"
+| project TimeGenerated, Computer, RawData
+
+// Job failures (Spark and MapReduce)
+HadoopLogs_CL
+| where TimeGenerated > ago(24h)
+| where FilePath contains "spark-audit" or FilePath contains "hs-audit"
+| where RawData contains "ERROR" or RawData contains "FAILED"
+| project TimeGenerated, Computer, FilePath, RawData
+

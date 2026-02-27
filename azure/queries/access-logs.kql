@@ -1,0 +1,7 @@
+// HTTP access logs for all web UIs
+
+HadoopLogs_CL
+| where TimeGenerated > ago(24h)
+| where FilePath contains "jetty-"
+| project TimeGenerated, Computer, FilePath, RawData
+

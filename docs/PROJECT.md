@@ -167,6 +167,7 @@ Use syslog config variants to forward logs to a syslog server. See [SYSLOG_SETUP
 | [CONFIGURATION_GUIDE.md](CONFIGURATION_GUIDE.md) | Config reference, glossary, file index |
 | [LOGGING_TOGGLES.md](LOGGING_TOGGLES.md) | Per-component toggles (MapReduce, Router, NM audit, etc.) |
 | [SYSLOG_SETUP.md](SYSLOG_SETUP.md) | Syslog configuration, rsyslog example |
+| [AZURE_MONITOR_HDFS_LOGS.md](AZURE_MONITOR_HDFS_LOGS.md) | Ingest HDFS container logs into Azure Monitor |
 | [LOG_SCENARIOS.md](LOG_SCENARIOS.md) | What happens and what you see in logs |
 | [SCRIPTS.md](SCRIPTS.md) | Script reference |
 | [ANSIBLE.md](ANSIBLE.md) | Ansible role and module |

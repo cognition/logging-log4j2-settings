@@ -67,3 +67,19 @@ Bundles Spark/Hadoop configuration for deployment to another system. Creates `sp
 **Bundle contents:** docker-compose.yml, hadoop-conf/, spark-conf/, scripts/, docs/, jmx-exporter-config/, README.md, empty logs/ with .gitkeep, DEPLOY.md. Optional hive-conf/, hbase-conf/, pig-conf/ when present.
 
 **On target host:** `tar -xzf spark-hadoop-config-*.tar.gz && cd spark-hadoop-config-* && ./scripts/fetch-hadoop-conf.sh && chmod 777 logs && docker compose up -d`
+
+---
+
+## scripts/sync-hdfs-logs-to-local.sh
+
+Syncs YARN aggregated container logs from HDFS to a local directory so Azure Monitor Agent can collect them via a Custom Text Logs DCR.
+
+| Environment | Default | Description |
+|-------------|---------|--------------|
+| `HDFS_LOG_DIR` | `/tmp/logs` | HDFS path for YARN log aggregation |
+| `OUTPUT_DIR` | `/logs/hdfs-container-logs` | Local output directory |
+| `HADOOP_CONF_DIR` | (required) | Hadoop config path |
+
+**Usage:** `HADOOP_CONF_DIR=/path/to/hadoop-conf ./scripts/sync-hdfs-logs-to-local.sh`
+
+**Production:** Run via cron or systemd timer. See [AZURE_MONITOR_HDFS_LOGS.md](AZURE_MONITOR_HDFS_LOGS.md).

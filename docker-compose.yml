@@ -165,11 +165,31 @@ services:
       - ./logs:/logs
     entrypoint: ["/bin/sh", "-c"]
     command:
-      - "touch /logs/rm-audit.log && chmod 666 /logs/rm-audit.log; exit 0"
+      - "touch /logs/rm-audit.log && chmod 666 /logs/rm-audit.log; mkdir -p /logs/hdfs-container-logs; exit 0"
     depends_on:
       namenode:
         condition: service_healthy
     restart: "no"
+
+  hdfs-log-sync:
+    image: apache/spark:3.5.6
+    volumes:
+      - ./hadoop-conf:/opt/spark/conf/hadoop:ro
+      - ./logs:/logs
+      - ./scripts:/scripts:ro
+    environment:
+      HADOOP_CONF_DIR: /opt/spark/conf/hadoop
+      HDFS_LOG_DIR: /tmp/logs
+      OUTPUT_DIR: /logs/hdfs-container-logs
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - "while true; do /scripts/sync-hdfs-logs-to-local.sh; sleep 300; done"
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+      namenode:
+        condition: service_healthy
+    restart: unless-stopped
 
   bootstrap:
     image: ghcr.io/hadoop-sandbox/hadoop-hdfs-namenode:latest

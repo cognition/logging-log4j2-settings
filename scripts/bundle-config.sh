@@ -43,7 +43,7 @@ done
 
 # Scripts (only the deployment scripts)
 mkdir -p "$TMP_DIR/$BUNDLE_NAME/scripts"
-cp scripts/fetch-hadoop-conf.sh scripts/test-spark-yarn.sh scripts/bundle-config.sh "$TMP_DIR/$BUNDLE_NAME/scripts/"
+cp scripts/fetch-hadoop-conf.sh scripts/test-spark-yarn.sh scripts/bundle-config.sh scripts/sync-hdfs-logs-to-local.sh "$TMP_DIR/$BUNDLE_NAME/scripts/"
 
 # Docs
 cp -r docs "$TMP_DIR/$BUNDLE_NAME/"

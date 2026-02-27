@@ -1,5 +1,0 @@
-# Test dependencies for log verification tests
-# Python 3.12 preferred (per project standards); compatible with 3.6+
-# Install: pip install -r requirements-test.txt
-
-pytest>=5.0.0

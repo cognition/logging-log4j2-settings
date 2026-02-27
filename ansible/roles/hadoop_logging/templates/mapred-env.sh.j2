@@ -1,7 +1,0 @@
-# MapReduce JobHistory audit: {{ hadoop_logging_mapreduce_hs_audit }}
-# Set hadoop_logging_mapreduce_hs_audit to INFO to enable hs-audit.log
-{% if hadoop_logging_mapreduce_hs_audit != 'OFF' %}
-export MAPRED_HISTORYSERVER_OPTS="${MAPRED_HISTORYSERVER_OPTS:-} -Dmapreduce.hs.audit.logger={{ hadoop_logging_mapreduce_hs_audit }} -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1030"
-{% else %}
-export MAPRED_HISTORYSERVER_OPTS="-Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1030"
-{% endif %}

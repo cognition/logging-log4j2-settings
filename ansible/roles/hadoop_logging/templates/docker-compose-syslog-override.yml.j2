@@ -1,0 +1,25 @@
+# Docker Compose override for syslog-enabled logging
+# Use: docker compose -f docker-compose.yml -f docker-compose.syslog.yml up -d
+
+name: spark-hadoop
+
+services:
+  namenode:
+    environment:
+      HDFS_NAMENODE_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2-syslog.properties -Dsyslog.host={{ syslog_host }} -Dsyslog.port={{ syslog_port }} -Dsyslog.facility={{ syslog_facility }} -Dhdfs.audit.logger=INFO,RFAAUDIT -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1028"
+
+  resourcemanager:
+    environment:
+      YARN_RESOURCEMANAGER_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2-syslog.properties -Dsyslog.host={{ syslog_host }} -Dsyslog.port={{ syslog_port }} -Dsyslog.facility={{ syslog_facility }} -Drm.audit.logger=INFO,RMAUDIT -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1026"
+
+  jobhistoryserver:
+    environment:
+      MAPRED_HISTORYSERVER_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2-syslog.properties -Dsyslog.host={{ syslog_host }} -Dsyslog.port={{ syslog_port }} -Dsyslog.facility={{ syslog_facility }} -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1030"
+
+  spark-history:
+    environment:
+      SPARK_DAEMON_JAVA_OPTS: "-Dlog4j.configurationFile=file:/spark/conf/log4j2-syslog.properties -Dsyslog.host={{ syslog_host }} -Dsyslog.port={{ syslog_port }} -Dsyslog.facility={{ syslog_facility }}"
+
+  spark-client:
+    environment:
+      SPARK_SUBMIT_OPTS: "-Dlog4j.configurationFile=file:/opt/spark/conf/log4j2-syslog.properties -Dsyslog.host={{ syslog_host }} -Dsyslog.port={{ syslog_port }} -Dsyslog.facility={{ syslog_facility }}"

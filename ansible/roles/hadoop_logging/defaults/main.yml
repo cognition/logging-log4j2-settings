@@ -1,0 +1,36 @@
+---
+# hadoop_logging role defaults
+# Deploy Hadoop ecosystem logging configs, toggles, and log dirs
+
+# Unified log directory for all ecosystem components (LOG_DIR)
+log_dir: /logs
+
+# Deploy path: where configs are deployed (e.g. extracted bundle root)
+hadoop_logging_deploy_path: "{{ playbook_dir }}/../"
+
+# Config source: path to hadoop-conf, spark-conf. Set to empty to skip copy (configs already present).
+hadoop_logging_config_source: "{{ playbook_dir }}/../../"
+
+# Copy configs from source (set false when configs already at deploy_path, e.g. after bundle extract)
+hadoop_logging_copy_configs: true
+
+# Component toggles (OFF when not deployed)
+hadoop_logging_mapreduce_hs_audit: "OFF"
+hadoop_logging_mapreduce_shuffle_audit: "OFF"
+hadoop_logging_router_audit: "OFF"
+hadoop_logging_nm_audit: "OFF"
+hadoop_logging_namenode_metrics: "OFF"
+hadoop_logging_datanode_metrics: "OFF"
+hadoop_logging_hive_enabled: "OFF"
+hadoop_logging_hbase_enabled: "OFF"
+hadoop_logging_pig_enabled: "OFF"
+
+# Syslog
+hadoop_logging_syslog_enabled: false
+syslog_host: localhost
+syslog_port: "514"
+syslog_protocol: UDP
+syslog_facility: LOCAL1
+
+# Docker deployment: create docker-compose override for syslog
+hadoop_logging_docker_deploy: false

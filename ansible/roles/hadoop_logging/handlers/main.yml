@@ -1,0 +1,9 @@
+---
+# hadoop_logging role handlers
+# Restart services when config changes (Docker deployment)
+
+- name: Restart jobhistoryserver
+  ansible.builtin.command:
+    cmd: docker compose restart jobhistoryserver
+    chdir: "{{ hadoop_logging_deploy_path }}"
+  when: hadoop_logging_docker_deploy | bool

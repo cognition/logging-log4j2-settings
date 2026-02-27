@@ -53,6 +53,11 @@ if [[ -d jmx-exporter-config ]]; then
   cp -r jmx-exporter-config "$TMP_DIR/$BUNDLE_NAME/"
 fi
 
+# Ansible role and playbook
+if [[ -d ansible ]]; then
+  cp -r ansible "$TMP_DIR/$BUNDLE_NAME/"
+fi
+
 # Empty logs directory with .gitkeep
 mkdir -p "$TMP_DIR/$BUNDLE_NAME/logs"
 touch "$TMP_DIR/$BUNDLE_NAME/logs/.gitkeep"
@@ -66,6 +71,8 @@ cat > "$TMP_DIR/$BUNDLE_NAME/DEPLOY.md" << 'DEPLOY_EOF'
 3. Prepare logs: `chmod 777 logs`
 4. Start cluster: `docker compose up -d`
 5. Verify: `./scripts/test-spark-yarn.sh`
+
+Optional: Run Ansible to apply toggles or syslog — see docs/ANSIBLE.md.
 
 See README.md and docs/ for full documentation.
 DEPLOY_EOF

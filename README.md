@@ -33,6 +33,7 @@ docker exec -u hdfs spark-hadoop-namenode-1 hdfs dfs -chmod -R 777 /user /spark-
 **Documentation for system administrators:**
 - [Configuration guide](docs/CONFIGURATION_GUIDE.md) — line-by-line config reference with glossary
 - [Log scenarios](docs/LOG_SCENARIOS.md) — what happens and what you see in the logs (job submission, CRUD, startup, failures)
+- [Ansible role](docs/ANSIBLE.md) — deploy configs, apply toggles, syslog vars
 
 ## Layout
 

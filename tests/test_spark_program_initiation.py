@@ -44,17 +44,21 @@ class TestSparkAuditLogs:
 
     def test_spark_audit_log_exists(self, cluster_running):
         """Spark audit log exists."""
-        path = REPO_ROOT / "logs" / "spark-audit.log"
-        # May not exist until first job; run a quick job to generate
+        from conftest import find_log
+
         run_spark_submit()
         time.sleep(5)
-        assert path.exists(), "spark-audit.log should exist after job submission"
+        path = find_log(REPO_ROOT / "logs", "spark-audit.log")
+        assert path is not None and path.exists(), "spark-audit.log should exist after job submission"
 
     def test_spark_audit_has_audit_tag(self, cluster_running):
         """Spark audit uses [Audit][Spark] tag."""
+        from conftest import find_log
+
         run_spark_submit()
         time.sleep(5)
-        path = REPO_ROOT / "logs" / "spark-audit.log"
+        path = find_log(REPO_ROOT / "logs", "spark-audit.log")
+        assert path, "spark-audit.log should exist"
         content = read_log_tail(path, 200)
         assert "[Audit]" in content or "Spark" in content, (
             "Spark audit should have Audit tag"
@@ -64,14 +68,12 @@ class TestSparkAuditLogs:
         """YARN ResourceManager logs application submission."""
         run_spark_submit()
         time.sleep(5)
-        # YARN RM logs to rm-audit.log, rm-appsummary.log, or hadoop.log
+        # YARN RM logs to logs/resourcemanager/ (rm-audit.log, rm-appsummary.log, hadoop.log)
         logs_dir = REPO_ROOT / "logs"
-        yarn_logs = []
-        for pattern in ["rm-audit.log", "rm-appsummary.log", "hadoop.log", "*resourcemanager*.log", "yarn*.log"]:
-            yarn_logs.extend(logs_dir.glob(pattern))
+        yarn_logs = list(logs_dir.glob("**/rm-audit.log")) + list(logs_dir.glob("**/rm-appsummary.log")) + list(logs_dir.glob("**/hadoop.log"))
         yarn_logs = list(dict.fromkeys(yarn_logs))  # deduplicate
         if not yarn_logs:
-            yarn_logs = list(logs_dir.glob("*.log"))
+            yarn_logs = list(logs_dir.glob("**/*.log"))
         content = ""
         for p in yarn_logs[:3]:
             content += read_log_tail(p, 100)

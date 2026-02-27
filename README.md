@@ -9,7 +9,7 @@ Apache Spark 3.5.6 on YARN with configurable logging for practising and demonstr
 ## What It Does
 
 - **Docker Compose cluster** — HDFS, YARN, MapReduce, Spark History Server, Spark client
-- **Unified logging** — All components write to `logs/` via `LOG_DIR`
+- **Unified logging** — All components write to `logs/<node-name>/` via `LOG_DIR` (per-node directories)
 - **Audit logs** — HDFS operations, YARN submissions, Spark job lifecycle
 - **UI access logs** — HTTP request logging for all web UIs
 - **Syslog variants** — Optional configs to forward logs to syslog
@@ -35,8 +35,8 @@ Container images are pulled automatically from hadoop-sandbox and Docker Hub.
 # 1. Fetch Hadoop config (run once)
 ./scripts/fetch-hadoop-conf.sh
 
-# 2. Prepare logs directory
-chmod 777 logs
+# 2. Prepare logs directory (log-init creates per-node subdirs: logs/<node-name>/)
+mkdir -p logs && chmod -R 777 logs
 
 # 3. Start cluster
 docker compose up -d
@@ -76,7 +76,7 @@ docker compose up -d
 |------|---------|
 | `hadoop-conf/` | Hadoop config (HDFS, YARN, MapReduce) |
 | `spark-conf/` | Spark config (log4j2, spark-defaults, metrics) |
-| `logs/` | Unified log directory |
+| `logs/` | Per-node log directories: `logs/namenode/`, `logs/hadoopnode/`, `logs/resourcemanager/`, etc. |
 | `scripts/` | fetch-hadoop-conf.sh, test-spark-yarn.sh, bundle-config.sh |
 | `ansible/` | Role, playbook, hadoop_logging_toggle module |
 | `docs/` | Documentation |

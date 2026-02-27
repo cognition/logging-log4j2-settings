@@ -7,7 +7,7 @@
 # Usage: ./scripts/bundle-config.sh [output-dir]
 #   output-dir: where to write the tar.gz (default: project root)
 #
-# On target host: extract, run ./scripts/fetch-hadoop-conf.sh, chmod 777 logs, docker compose up -d
+# On target host: extract, run ./scripts/fetch-hadoop-conf.sh, mkdir -p logs && chmod -R 777 logs, docker compose up -d
 #
 set -euo pipefail
 
@@ -73,7 +73,7 @@ cat > "$TMP_DIR/$BUNDLE_NAME/DEPLOY.md" << 'DEPLOY_EOF'
 
 1. Extract: `tar -xzf spark-hadoop-config-*.tar.gz && cd spark-hadoop-config-*`
 2. Fetch Hadoop config: `./scripts/fetch-hadoop-conf.sh`
-3. Prepare logs: `chmod 777 logs`
+3. Prepare logs: `mkdir -p logs && chmod -R 777 logs`
 4. Start cluster: `docker compose up -d`
 5. Verify: `./scripts/test-spark-yarn.sh`
 
@@ -87,4 +87,4 @@ mkdir -p "$OUTPUT_DIR"
 tar -czf "$OUTPUT_DIR/${BUNDLE_NAME}.tar.gz" -C "$TMP_DIR" "$BUNDLE_NAME"
 
 echo "Created $OUTPUT_DIR/${BUNDLE_NAME}.tar.gz"
-echo "To deploy: tar -xzf ${BUNDLE_NAME}.tar.gz && cd $BUNDLE_NAME && ./scripts/fetch-hadoop-conf.sh && chmod 777 logs && docker compose up -d"
+echo "To deploy: tar -xzf ${BUNDLE_NAME}.tar.gz && cd $BUNDLE_NAME && ./scripts/fetch-hadoop-conf.sh && mkdir -p logs && chmod -R 777 logs && docker compose up -d"

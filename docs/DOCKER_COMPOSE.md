@@ -21,7 +21,7 @@ This file defines all containers for the Spark-on-YARN cluster. Reference: [Dock
 | 9 | `image: ghcr.io/hadoop-sandbox/hadoop-hdfs-namenode:latest` | Container image. NameNode manages HDFS metadata (file names, block locations) |
 | 10–13 | `volumes:` | Mount host paths into container |
 | 11 | `./hadoop-conf:/hadoop/etc/hadoop:ro` | Hadoop config. `:ro` = read-only |
-| 12 | `./logs:/logs` | Log output directory (writable) |
+| 12 | `./logs/namenode:/logs` | Per-node log directory (writable) |
 | 13 | `namenode:/data` | Named volume for NameNode data (persists across restarts) |
 | 14–16 | `environment:` | Environment variables |
 | 15 | `LOG_DIR: /logs` | Where Hadoop writes logs |
@@ -105,7 +105,7 @@ This file defines all containers for the Spark-on-YARN cluster. Reference: [Dock
 | 163–173 | `log-init:` | Runs once to create `rm-audit.log` with correct permissions |
 | 166 | `busybox:latest` | Minimal image for simple file ops |
 | 168 | `entrypoint: ["/bin/sh", "-c"]` | Override entrypoint |
-| 169 | `command: "touch /logs/rm-audit.log && chmod 666 /logs/rm-audit.log; exit 0"` | Create file so ResourceManager can write to it (avoids permission errors) |
+| 166–171 | `log-init` command | Creates per-node directories (`logs/namenode/`, `logs/hadoopnode/`, etc.), sets permissions, and pre-creates `rm-audit.log` for ResourceManager |
 | 172 | `restart: "no"` | Run once, don't restart |
 | 171 | `depends_on: namenode: condition: service_healthy` | Wait for NameNode |
 

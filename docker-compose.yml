@@ -9,7 +9,7 @@ services:
     image: ghcr.io/hadoop-sandbox/hadoop-hdfs-namenode:latest
     volumes:
       - ./hadoop-conf:/hadoop/etc/hadoop:ro
-      - ./logs:/logs
+      - ./logs/namenode:/logs
       - namenode:/data
     environment:
       LOG_DIR: /logs
@@ -28,7 +28,7 @@ services:
     image: ghcr.io/hadoop-sandbox/hadoop-hdfs-datanode:latest
     volumes:
       - ./hadoop-conf:/hadoop/etc/hadoop:ro
-      - ./logs:/logs
+      - ./logs/hadoopnode:/logs
       - hadoopnode:/data
       - dnsocket:/run/hadoop-hdfs
     environment:
@@ -51,7 +51,7 @@ services:
     image: ghcr.io/hadoop-sandbox/hadoop-yarn-resourcemanager:latest
     volumes:
       - ./hadoop-conf:/hadoop/etc/hadoop:ro
-      - ./logs:/logs
+      - ./logs/resourcemanager:/logs
     environment:
       LOG_DIR: /logs
       YARN_RESOURCEMANAGER_OPTS: "-Drm.audit.logger=INFO,RMAUDIT -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1026"
@@ -76,7 +76,7 @@ services:
     image: ghcr.io/hadoop-sandbox/hadoop-yarn-nodemanager-spark:latest
     volumes:
       - ./hadoop-conf:/hadoop/etc/hadoop:ro
-      - ./logs:/logs
+      - ./logs/hadoopnode:/logs
       - hadoopnode:/data
       - dnsocket:/run/hadoop-hdfs
     environment:
@@ -108,7 +108,7 @@ services:
     image: ghcr.io/hadoop-sandbox/hadoop-mapred-jobhistoryserver:latest
     volumes:
       - ./hadoop-conf:/hadoop/etc/hadoop:ro
-      - ./logs:/logs
+      - ./logs/jobhistoryserver:/logs
     environment:
       LOG_DIR: /logs
     restart: always
@@ -135,7 +135,7 @@ services:
     volumes:
       - ./hadoop-conf:/hadoop/etc/hadoop:ro
       - ./spark-conf:/spark/conf:ro
-      - ./logs:/logs
+      - ./logs/sparkhistoryserver:/logs
     environment:
       SPARK_CONF_DIR: /spark/conf
       LOG_DIR: /logs
@@ -165,7 +165,11 @@ services:
       - ./logs:/logs
     entrypoint: ["/bin/sh", "-c"]
     command:
-      - "touch /logs/rm-audit.log && chmod 666 /logs/rm-audit.log; mkdir -p /logs/hdfs-container-logs; exit 0"
+      - |
+        mkdir -p /logs/namenode /logs/hadoopnode /logs/resourcemanager /logs/jobhistoryserver /logs/sparkhistoryserver /logs/spark-client /logs/hdfs-container-logs
+        chmod -R 777 /logs
+        touch /logs/resourcemanager/rm-audit.log && chmod 666 /logs/resourcemanager/rm-audit.log
+        exit 0
     depends_on:
       namenode:
         condition: service_healthy
@@ -214,7 +218,7 @@ services:
     volumes:
       - ./spark-conf:/opt/spark/conf
       - ./hadoop-conf:/opt/spark/conf/hadoop:ro
-      - ./logs:/logs
+      - ./logs/spark-client:/logs
     environment:
       SPARK_CONF_DIR: /opt/spark/conf
       LOG_DIR: /logs

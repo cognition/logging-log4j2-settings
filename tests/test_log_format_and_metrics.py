@@ -16,9 +16,9 @@ class TestHostnamePrefix:
 
     def test_hdfs_audit_has_hostname_prefix(self, cluster_running):
         """HDFS audit log has [hostname] prefix."""
-        logs_dir = REPO_ROOT / "logs"
-        candidates = [p for p in logs_dir.glob("hdfs-audit*.log") if p.stat().st_size > 0]
-        path = candidates[0] if candidates else logs_dir / "hdfs-audit.log"
+        from conftest import find_log
+
+        path = find_log(REPO_ROOT / "logs", "hdfs-audit*.log") or REPO_ROOT / "logs" / "namenode" / "hdfs-audit.log"
         if path.exists():
             content = read_log_tail(path, 5)
             if content:
@@ -27,7 +27,9 @@ class TestHostnamePrefix:
 
     def test_spark_audit_has_hostname_prefix(self, cluster_running):
         """Spark audit log has [hostname] prefix."""
-        path = REPO_ROOT / "logs" / "spark-audit.log"
+        from conftest import find_log
+
+        path = find_log(REPO_ROOT / "logs", "spark-audit.log") or REPO_ROOT / "logs" / "spark-client" / "spark-audit.log"
         if path.exists():
             content = read_log_tail(path, 5)
             if content:
@@ -41,10 +43,10 @@ class TestMetricsOutput:
     def test_hadoop_metrics_file_sink_produces_output(self, cluster_running):
         """hadoop-metrics2 FileSink produces *-metrics.out files."""
         metrics_dir = REPO_ROOT / "logs"
-        # At least one metrics file should exist after cluster has been running
-        metrics_files = list(metrics_dir.glob("*-metrics.out")) if metrics_dir.exists() else []
+        # At least one metrics file should exist after cluster has been running (per-node layout)
+        metrics_files = list(metrics_dir.glob("**/*-metrics.out")) if metrics_dir.exists() else []
         # FileSink may write to different names; also check for .out
-        out_files = list(metrics_dir.glob("*.out")) if metrics_dir.exists() else []
+        out_files = list(metrics_dir.glob("**/*.out")) if metrics_dir.exists() else []
         # FileSink writes to hadoop.log.dir; may take time to appear
         assert True  # Optional: metrics files indicate FileSink is working
 

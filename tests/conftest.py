@@ -18,6 +18,15 @@ import pytest
 # Paths relative to repo root
 REPO_ROOT = Path(__file__).resolve().parent.parent
 LOGS_DIR = REPO_ROOT / "logs"
+
+
+def find_log(logs_dir: Path, *patterns: str) -> Path | None:
+    """Find first non-empty log file matching any pattern under logs_dir (per-node layout)."""
+    for pattern in patterns:
+        for p in sorted(logs_dir.glob(f"**/{pattern}")):
+            if p.is_file() and p.stat().st_size > 0:
+                return p
+    return None
 SPARK_CLIENT = os.environ.get("SPARK_CLIENT_CONTAINER", "spark-hadoop-spark-client-1")
 NAMENODE_CONTAINER = os.environ.get("NAMENODE_CONTAINER", "spark-hadoop-namenode-1")
 

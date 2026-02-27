@@ -21,13 +21,12 @@ from conftest import NAMENODE_CONTAINER, REPO_ROOT, read_log_tail
 
 @pytest.fixture
 def hdfs_audit_log():
-    """Path to HDFS audit log (per-hostname to avoid RM/NN conflict)."""
+    """Path to HDFS audit log (in logs/namenode/ per-node layout)."""
+    from conftest import find_log
+
     logs_dir = REPO_ROOT / "logs"
-    candidates = sorted(logs_dir.glob("hdfs-audit*.log"))
-    for p in candidates:
-        if p.stat().st_size > 0:
-            return p
-    return candidates[0] if candidates else logs_dir / "hdfs-audit.log"
+    path = find_log(logs_dir, "hdfs-audit*.log")
+    return path if path else logs_dir / "namenode" / "hdfs-audit.log"
 
 
 def run_hdfs_cmd(cmd: List[str]) -> subprocess.CompletedProcess:

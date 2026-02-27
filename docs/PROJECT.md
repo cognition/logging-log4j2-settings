@@ -16,7 +16,7 @@ This project provides a **Docker Compose–based Spark-on-YARN cluster** with co
 
 | Feature | Description |
 |--------|-------------|
-| **Unified logging** | All components (HDFS, YARN, MapReduce, Spark) write to a single `logs/` directory via `LOG_DIR` |
+| **Unified logging** | All components write to `logs/<node-name>/` via `LOG_DIR` (same path `/logs` in each container, mapped per node) |
 | **Audit logs** | HDFS operations, YARN application submissions, Spark job lifecycle, MapReduce JobHistory (optional) |
 | **UI access logs** | HTTP request logging for all web UIs (NameNode, DataNode, RM, JobHistory, NodeManager, Spark History) |
 | **Syslog variants** | Optional configs that forward audit/access logs to syslog (local or remote) |
@@ -83,8 +83,8 @@ This project provides a **Docker Compose–based Spark-on-YARN cluster** with co
 # 1. Fetch Hadoop config from hadoop-sandbox (run once)
 ./scripts/fetch-hadoop-conf.sh
 
-# 2. Ensure logs directory is writable
-chmod 777 logs
+# 2. Ensure logs directory exists and is writable (log-init creates per-node subdirs)
+mkdir -p logs && chmod -R 777 logs
 
 # 3. Start YARN cluster + Spark client
 docker compose up -d
@@ -151,7 +151,7 @@ Use syslog config variants to forward logs to a syslog server. See [SYSLOG_SETUP
 |------|---------|
 | `hadoop-conf/` | Hadoop config (HDFS, YARN, MapReduce). Mounted to `/hadoop/etc/hadoop` |
 | `spark-conf/` | Spark config (log4j2, spark-defaults, metrics). Mounted to `/opt/spark/conf` |
-| `logs/` | Unified log directory. Mounted to `/logs` |
+| `logs/` | Per-node log directories: `logs/namenode/`, `logs/hadoopnode/`, `logs/resourcemanager/`, etc. Each mounted to `/logs` in its container |
 | `scripts/` | fetch-hadoop-conf.sh, test-spark-yarn.sh, bundle-config.sh |
 | `ansible/` | Role, playbook, custom module |
 | `docs/` | Documentation |
@@ -229,6 +229,4 @@ docker exec -u hdfs spark-hadoop-namenode-1 hdfs dfs -mkdir -p /user/spark /spar
 docker exec -u hdfs spark-hadoop-namenode-1 hdfs dfs -chmod -R 777 /user /spark-history
 ```
 
-**Migration from hadoop-logs/spark-logs**
-
-Copy existing logs into `logs/` and remove the old directories.
+**Log layout:** Each node writes to `/logs` inside its container, mapped to `logs/<node-name>/` on the host (e.g. `logs/namenode/`, `logs/resourcemanager/`).

@@ -1,26 +1,8 @@
-# Unified logs (generated at runtime)
-logs/*.log
-logs/*.log.*
-logs/*.out
-logs/hdfs-container-logs/
-
-# Hadoop logs
-hadoop-logs/*  
-hadoop-logs/*.log
-hadoop-logs/*.log.*
-hadoop-logs/*.out   
-
-# Spark logs
-spark-logs/*  
-spark-logs/*.log
-spark-logs/*.log.*
-spark-logs/*.out       
-
-# Jetty logs
-jetty-logs/*  
-jetty-logs/*.log
-jetty-logs/*.log.*
-jetty-logs/*.out                
+# Unified logs (generated at runtime, per-node: logs/<node-name>/)
+logs/**/*.log
+logs/**/*.log.*
+logs/**/*.out
+logs/hdfs-container-logs/                
 
 # Cursor
 .cursor/

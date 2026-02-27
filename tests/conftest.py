@@ -17,8 +17,7 @@ import pytest
 
 # Paths relative to repo root
 REPO_ROOT = Path(__file__).resolve().parent.parent
-HADOOP_LOGS = REPO_ROOT / "hadoop-logs"
-SPARK_LOGS = REPO_ROOT / "spark-logs"
+LOGS_DIR = REPO_ROOT / "logs"
 SPARK_CLIENT = os.environ.get("SPARK_CLIENT_CONTAINER", "spark-hadoop-spark-client-1")
 NAMENODE_CONTAINER = os.environ.get("NAMENODE_CONTAINER", "spark-hadoop-namenode-1")
 
@@ -51,15 +50,9 @@ def cluster_running():
 
 
 @pytest.fixture
-def hadoop_logs(cluster_running):
-    """Path to hadoop logs directory."""
-    return HADOOP_LOGS
-
-
-@pytest.fixture
-def spark_logs(cluster_running):
-    """Path to spark logs directory."""
-    return SPARK_LOGS
+def logs_dir(cluster_running):
+    """Path to unified logs directory."""
+    return LOGS_DIR
 
 
 def read_log_tail(path: Path, lines: int = 500) -> str:

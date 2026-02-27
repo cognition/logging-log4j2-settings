@@ -1,11 +1,25 @@
-# Spark logs (generated at runtime)
-spark-logs/*.log
-spark-logs/*.log.*
+# Unified logs (generated at runtime)
+logs/*.log
+logs/*.log.*
+logs/*.out
 
-# Hadoop logs and metrics
+# Hadoop logs
+hadoop-logs/*  
 hadoop-logs/*.log
 hadoop-logs/*.log.*
-hadoop-logs/*.out
+hadoop-logs/*.out   
+
+# Spark logs
+spark-logs/*  
+spark-logs/*.log
+spark-logs/*.log.*
+spark-logs/*.out       
+
+# Jetty logs
+jetty-logs/*  
+jetty-logs/*.log
+jetty-logs/*.log.*
+jetty-logs/*.out                
 
 # Cursor
 .cursor/

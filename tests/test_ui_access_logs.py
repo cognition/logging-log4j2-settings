@@ -32,7 +32,7 @@ class TestUIAccessLogs:
         """Accessing RM UI produces jetty-resourcemanager.log entries."""
         curl_ui("http://localhost:8088/")
         time.sleep(2)
-        path = REPO_ROOT / "hadoop-logs" / "jetty-resourcemanager.log"
+        path = REPO_ROOT / "logs" / "jetty-resourcemanager.log"
         if not path.exists():
             pytest.skip("jetty-resourcemanager.log not found")
         content = read_log_tail(path, 20)
@@ -49,8 +49,8 @@ class TestUIAccessLogs:
         curl_ui("http://localhost:18080/")
         time.sleep(2)
         for log_dir, name in [
-            (REPO_ROOT / "hadoop-logs", "jetty-resourcemanager.log"),
-            (REPO_ROOT / "spark-logs", "jetty-access.log"),
+            (REPO_ROOT / "logs", "jetty-resourcemanager.log"),
+            (REPO_ROOT / "logs", "jetty-access.log"),
         ]:
             path = log_dir / name
             if path.exists():
@@ -62,7 +62,7 @@ class TestUIAccessLogs:
         """Spark History Server UI access is logged."""
         curl_ui("http://localhost:18080/")
         time.sleep(2)
-        path = REPO_ROOT / "spark-logs" / "jetty-access.log"
+        path = REPO_ROOT / "logs" / "jetty-access.log"
         if path.exists():
             content = read_log_tail(path, 20)
             assert content, "Spark History Server access should be logged"

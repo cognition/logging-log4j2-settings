@@ -22,7 +22,7 @@ from conftest import NAMENODE_CONTAINER, REPO_ROOT, read_log_tail
 @pytest.fixture
 def hdfs_audit_log():
     """Path to HDFS audit log (per-hostname to avoid RM/NN conflict)."""
-    logs_dir = REPO_ROOT / "hadoop-logs"
+    logs_dir = REPO_ROOT / "logs"
     candidates = sorted(logs_dir.glob("hdfs-audit*.log"))
     for p in candidates:
         if p.stat().st_size > 0:

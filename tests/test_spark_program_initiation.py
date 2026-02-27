@@ -44,7 +44,7 @@ class TestSparkAuditLogs:
 
     def test_spark_audit_log_exists(self, cluster_running):
         """Spark audit log exists."""
-        path = REPO_ROOT / "spark-logs" / "spark-audit.log"
+        path = REPO_ROOT / "logs" / "spark-audit.log"
         # May not exist until first job; run a quick job to generate
         run_spark_submit()
         time.sleep(5)
@@ -54,7 +54,7 @@ class TestSparkAuditLogs:
         """Spark audit uses [Audit][Spark] tag."""
         run_spark_submit()
         time.sleep(5)
-        path = REPO_ROOT / "spark-logs" / "spark-audit.log"
+        path = REPO_ROOT / "logs" / "spark-audit.log"
         content = read_log_tail(path, 200)
         assert "[Audit]" in content or "Spark" in content, (
             "Spark audit should have Audit tag"
@@ -65,7 +65,7 @@ class TestSparkAuditLogs:
         run_spark_submit()
         time.sleep(5)
         # YARN RM logs to rm-audit.log, rm-appsummary.log, or hadoop.log
-        logs_dir = REPO_ROOT / "hadoop-logs"
+        logs_dir = REPO_ROOT / "logs"
         yarn_logs = []
         for pattern in ["rm-audit.log", "rm-appsummary.log", "hadoop.log", "*resourcemanager*.log", "yarn*.log"]:
             yarn_logs.extend(logs_dir.glob(pattern))

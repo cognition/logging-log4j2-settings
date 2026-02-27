@@ -28,6 +28,7 @@ This guide explains **every configuration line** in this project. It is written 
 
 | Document | Contents |
 |----------|----------|
+| [LOGGING_TOGGLES.md](LOGGING_TOGGLES.md) | **Toggles:** Per-component enable/disable; LOG_DIR; MapReduce, Router, NM audit |
 | [LOG_SCENARIOS.md](LOG_SCENARIOS.md) | **Scenarios:** What happens and what you see in the logs (job submission, CRUD, startup, failures) |
 | [SPARK_CONF.md](SPARK_CONF.md) | Line-by-line: `log4j2.properties`, `spark-defaults.conf`, `metrics.properties` |
 | [HADOOP_CONF.md](HADOOP_CONF.md) | Line-by-line: `log4j2.properties`, `core-site.xml`, `hdfs-site.xml`, `yarn-site.xml`, `mapred-site.xml`, `hadoop-env.sh`, `hadoop-metrics2.properties` |
@@ -52,6 +53,6 @@ This guide explains **every configuration line** in this project. It is written 
 | **JVM** | Java Virtual Machine — the runtime that runs Java code |
 | **Daemon** | A background service (e.g., NameNode, ResourceManager) |
 | **RPC** | Remote Procedure Call — how services talk over the network |
-| **LOG_DIR** | Standardized env var for log directory. Default: `$HADOOP_HOME/logs` or `$SPARK_HOME/logs` |
+| **LOG_DIR** | Unified env var for all ecosystem logs. Default: `/logs`. Single directory for Azure Monitor/SIEM collection. |
 | **SIEM** | Security Information and Event Management — log aggregation for security |
 | **JMX** | Java Management Extensions — monitoring/metrics interface |

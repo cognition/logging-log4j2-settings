@@ -13,7 +13,7 @@ Hadoop uses **Log4j 2.x** for logging and **XML** for cluster settings. Referenc
 | Root | `rootLogger.level = info` | Default: INFO level |
 | Root | `rootLogger.appenderRef.console.ref = console` | Output to console |
 | Console | `appender.console.*` | Writes to stderr with hostname prefix |
-| Env / System | `LOG_DIR` env, `hadoop.log.dir` sys prop | Log directory. `LOG_DIR` is canonical; default `$HADOOP_HOME/logs` or `/hadoop/logs` |
+| Env / System | `LOG_DIR` env | Unified log directory for all ecosystem components. Default `/logs`. See [LOGGING_TOGGLES.md](LOGGING_TOGGLES.md). |
 | System props | `-Dlog4j.hostname` | Set in hadoop-env.sh for SIEM correlation |
 
 ### Rolling File Appender (RFA)
@@ -57,6 +57,13 @@ Hadoop uses **Log4j 2.x** for logging and **XML** for cluster settings. Referenc
 | Section | Content | What It Does |
 |---------|---------|--------------|
 | NMAUDIT | `appender.NMAUDIT.*` | NodeManager audit. Disabled by default (enable via `nm.audit.logger`) |
+
+### MapReduce JobHistory and Shuffle Audit
+
+| Section | Content | What It Does |
+|---------|---------|--------------|
+| HSAUDIT | `appender.HSAUDIT.*` | **MapReduce JobHistory audit** — logs job lifecycle. Default OFF. Enable via `-Dmapreduce.hs.audit.logger=INFO` in mapred-env.sh. Writes to `hs-audit.log` |
+| ShuffleHandler | `logger.shuffleaudit.*` | Shuffle connection audit. Default OFF. Enable via `-Dmapreduce.shuffle.audit.logger=INFO` |
 
 ### UI Access Logging (HTTP Request Logs)
 

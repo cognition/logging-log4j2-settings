@@ -21,10 +21,10 @@ This file defines all containers for the Spark-on-YARN cluster. Reference: [Dock
 | 9 | `image: ghcr.io/hadoop-sandbox/hadoop-hdfs-namenode:latest` | Container image. NameNode manages HDFS metadata (file names, block locations) |
 | 10–13 | `volumes:` | Mount host paths into container |
 | 11 | `./hadoop-conf:/hadoop/etc/hadoop:ro` | Hadoop config. `:ro` = read-only |
-| 12 | `./hadoop-logs:/hadoop/logs` | Log output directory (writable) |
+| 12 | `./logs:/logs` | Log output directory (writable) |
 | 13 | `namenode:/data` | Named volume for NameNode data (persists across restarts) |
 | 14–16 | `environment:` | Environment variables |
-| 15 | `HADOOP_LOG_DIR: /hadoop/logs` | Where Hadoop writes logs |
+| 15 | `LOG_DIR: /logs` | Where Hadoop writes logs |
 | 16 | `HDFS_NAMENODE_OPTS: "-Dhdfs.audit.logger=INFO,RFAAUDIT -Dcom.sun.management.jmxremote=..."` | Java options: enable HDFS audit to RFAAUDIT appender; enable JMX on port 1028 for monitoring |
 | 17 | `restart: always` | Restart container if it exits |
 | 18 | `init: true` | Use init as PID 1 (proper signal handling) |
@@ -91,8 +91,8 @@ This file defines all containers for the Spark-on-YARN cluster. Reference: [Dock
 | 131–161 | `spark-history:` | Serves Spark application history from HDFS event logs |
 | 135–137 | `volumes:` | Spark config, logs, and Hadoop config (for HDFS client) |
 | 136 | `./spark-conf:/spark/conf:ro` | Spark config (log4j2, spark-defaults, metrics) |
-| 137 | `./spark-logs:/spark/logs` | Spark History Server logs |
-| 138 | `./hadoop-logs:/hadoop/logs` | Shared for Jetty access logs |
+| 137 | `./logs:/logs` | Spark History Server logs |
+| 138 | `./logs:/logs` | Shared for Jetty access logs |
 | 142 | `HOSTNAME: sparkhistoryserver` | Used in log format `[sparkhistoryserver]` |
 | 159–160 | `ports: "18080:18080"` | Spark History UI at `http://localhost:18080` |
 

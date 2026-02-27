@@ -8,8 +8,8 @@ Apache Spark 3.5.6 on YARN (no Hive) with mounted conf and logs for practising l
 # 1. Fetch Hadoop config from hadoop-sandbox (run once)
 ./scripts/fetch-hadoop-conf.sh
 
-# 2. Ensure logs directories are writable
-chmod 777 spark-logs hadoop-logs
+# 2. Ensure logs directory is writable
+chmod 777 logs
 
 # 3. Start YARN cluster + Spark client
 docker compose up -d
@@ -17,6 +17,8 @@ docker compose up -d
 # 4. Wait ~3–5 min for all services to be healthy, then submit a Spark job
 ./scripts/test-spark-yarn.sh
 ```
+
+**Migration from hadoop-logs/spark-logs:** If upgrading from an older layout, copy existing logs into `logs/` and remove the old directories.
 
 If you see "Permission denied: user=spark" when submitting, create HDFS dirs once:
 ```bash
@@ -35,11 +37,8 @@ docker exec -u hdfs spark-hadoop-namenode-1 hdfs dfs -chmod -R 777 /user /spark-
 | Path | Purpose |
 |------|---------|
 | `spark-conf/` | Mounted to `/opt/spark/conf` — log4j2.properties, spark-defaults.conf |
-| `spark-logs/` | Mounted to `$LOG_DIR` (default `/opt/spark/logs` or `/spark/logs`) — Spark driver/executor logs |
 | `hadoop-conf/` | Mounted to `/hadoop/etc/hadoop` — YARN, HDFS config (from hadoop-sandbox). Uses Log4j 2 (`log4j2.properties`) |
-| `hadoop-logs/` | Mounted to `$LOG_DIR` (default `/hadoop/logs`) — YARN, HDFS logs |
-
-**Log directory:** All services use the `LOG_DIR` environment variable. Defaults: `$HADOOP_HOME/logs` (or `/hadoop/logs`) for Hadoop; `$SPARK_HOME/logs` (or `/opt/spark/logs`) for Spark.
+| `logs/` | Mounted to `/logs` — **unified** log directory for all components (HDFS, YARN, Spark). Set via `LOG_DIR`. |
 | `scripts/fetch-hadoop-conf.sh` | Fetches Hadoop config from hadoop-sandbox |
 | `scripts/test-spark-yarn.sh` | Submits Spark Pi example to YARN |
 
@@ -48,17 +47,17 @@ docker exec -u hdfs spark-hadoop-namenode-1 hdfs dfs -chmod -R 777 /user /spark-
 - **Who submits:** YARN ResourceManager logs application submissions with user
 - **What runs:** Spark driver logs job lifecycle; YARN logs application IDs
 - **HDFS audit:** `hdfs.audit.logger=INFO,RFAAUDIT` in hadoop-conf/log4j2.properties
-- **Spark audit:** spark-logs/spark-audit.log — driver and application logs
+- **Spark audit:** logs/spark-audit.log — driver and application logs
 - **UI access logs:** HTTP request logging for all web UIs (NCSA format):
-  - hadoop-logs/jetty-namenode.log, jetty-datanode.log, jetty-resourcemanager.log, jetty-jobhistory.log, jetty-nodemanager.log
-  - spark-logs/jetty-access.log (Spark History Server and driver UI)
+  - logs/jetty-namenode.log, jetty-datanode.log, jetty-resourcemanager.log, jetty-jobhistory.log, jetty-nodemanager.log
+  - logs/jetty-access.log (Spark History Server and driver UI)
 - **Node identification:** All log lines include `[hostname]` prefix for SIEM correlation (e.g. `[namenode]`, `[resourcemanager]`, `[sparkhistoryserver]`)
 
 ## Metrics
 
 - **Spark (built-in):** Prometheus metrics at `/metrics/prometheus` on driver (4040) and History Server (18080). Configured via `spark-conf/metrics.properties` and `spark.ui.prometheus.enabled=true`.
 - **Hadoop JMX Exporter:** Configs in `jmx-exporter-config/`; process documented in [docs/JMX_EXPORTER_SETUP.md](docs/JMX_EXPORTER_SETUP.md). Not implemented by default.
-- **hadoop-metrics2:** FileSink enabled; outputs to `hadoop-logs/*-metrics.out` (namenode, datanode, resourcemanager, nodemanager, jobhistoryserver).
+- **hadoop-metrics2:** FileSink enabled; outputs to `logs/*-metrics.out` (namenode, datanode, resourcemanager, nodemanager, jobhistoryserver).
 
 ## Tests
 

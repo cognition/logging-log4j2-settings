@@ -9,10 +9,10 @@ services:
     image: ghcr.io/hadoop-sandbox/hadoop-hdfs-namenode:latest
     volumes:
       - ./hadoop-conf:/hadoop/etc/hadoop:ro
-      - ./hadoop-logs:/hadoop/logs
+      - ./logs:/logs
       - namenode:/data
     environment:
-      LOG_DIR: /hadoop/logs
+      LOG_DIR: /logs
       HDFS_NAMENODE_OPTS: "-Dhdfs.audit.logger=INFO,RFAAUDIT -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1028"
     restart: always
     init: true
@@ -28,11 +28,11 @@ services:
     image: ghcr.io/hadoop-sandbox/hadoop-hdfs-datanode:latest
     volumes:
       - ./hadoop-conf:/hadoop/etc/hadoop:ro
-      - ./hadoop-logs:/hadoop/logs
+      - ./logs:/logs
       - hadoopnode:/data
       - dnsocket:/run/hadoop-hdfs
     environment:
-      LOG_DIR: /hadoop/logs
+      LOG_DIR: /logs
     restart: always
     init: true
     ipc: shareable
@@ -51,9 +51,9 @@ services:
     image: ghcr.io/hadoop-sandbox/hadoop-yarn-resourcemanager:latest
     volumes:
       - ./hadoop-conf:/hadoop/etc/hadoop:ro
-      - ./hadoop-logs:/hadoop/logs
+      - ./logs:/logs
     environment:
-      LOG_DIR: /hadoop/logs
+      LOG_DIR: /logs
       YARN_RESOURCEMANAGER_OPTS: "-Drm.audit.logger=INFO,RMAUDIT -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1026"
     restart: always
     init: true
@@ -76,11 +76,11 @@ services:
     image: ghcr.io/hadoop-sandbox/hadoop-yarn-nodemanager-spark:latest
     volumes:
       - ./hadoop-conf:/hadoop/etc/hadoop:ro
-      - ./hadoop-logs:/hadoop/logs
+      - ./logs:/logs
       - hadoopnode:/data
       - dnsocket:/run/hadoop-hdfs
     environment:
-      LOG_DIR: /hadoop/logs
+      LOG_DIR: /logs
     restart: always
     init: true
     network_mode: service:datanode
@@ -108,9 +108,9 @@ services:
     image: ghcr.io/hadoop-sandbox/hadoop-mapred-jobhistoryserver:latest
     volumes:
       - ./hadoop-conf:/hadoop/etc/hadoop:ro
-      - ./hadoop-logs:/hadoop/logs
+      - ./logs:/logs
     environment:
-      LOG_DIR: /hadoop/logs
+      LOG_DIR: /logs
     restart: always
     init: true
     hostname: jobhistoryserver
@@ -135,11 +135,10 @@ services:
     volumes:
       - ./hadoop-conf:/hadoop/etc/hadoop:ro
       - ./spark-conf:/spark/conf:ro
-      - ./spark-logs:/spark/logs
-      - ./hadoop-logs:/hadoop/logs
+      - ./logs:/logs
     environment:
       SPARK_CONF_DIR: /spark/conf
-      LOG_DIR: /spark/logs
+      LOG_DIR: /logs
       HOSTNAME: sparkhistoryserver
     restart: always
     init: true
@@ -163,7 +162,7 @@ services:
   log-init:
     image: busybox:latest
     volumes:
-      - ./hadoop-logs:/logs
+      - ./logs:/logs
     entrypoint: ["/bin/sh", "-c"]
     command:
       - "touch /logs/rm-audit.log && chmod 666 /logs/rm-audit.log; exit 0"
@@ -195,10 +194,10 @@ services:
     volumes:
       - ./spark-conf:/opt/spark/conf
       - ./hadoop-conf:/opt/spark/conf/hadoop:ro
-      - ./spark-logs:/opt/spark/logs
+      - ./logs:/logs
     environment:
       SPARK_CONF_DIR: /opt/spark/conf
-      LOG_DIR: /opt/spark/logs
+      LOG_DIR: /logs
       HADOOP_CONF_DIR: /opt/spark/conf/hadoop
       HOSTNAME: spark-client
     working_dir: /opt/spark/work-dir

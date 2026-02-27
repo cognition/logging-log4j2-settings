@@ -12,14 +12,14 @@ This document describes **concrete scenarios**: what happens when users and syst
 
 | Step | What Happens | Where to Look | Example Log Entry |
 |------|--------------|---------------|-------------------|
-| 1 | spark-submit starts, driver initialises | `spark-logs/spark-audit.log` | `[spark-client][Audit][Spark] 26/02/26 00:00:34 INFO SparkContext: Running Spark version 3.5.6` |
-| 2 | Application name and submission | `spark-logs/spark-audit.log` | `[spark-client][Audit][Spark] 26/02/26 00:00:34 INFO SparkContext: Submitted application: Spark Pi` |
-| 3 | Spark uploads JARs to HDFS | `hadoop-logs/hdfs-audit-*.log` | `allowed=true ugi=spark cmd=create src=/user/spark/.sparkStaging/... proto=rpc` |
-| 4 | YARN receives submit request | `hadoop-logs/rm-audit.log` | `USER=spark IP=172.18.0.5 OPERATION=Submit Application Request TARGET=ClientRMService RESULT=SUCCESS APPID=application_1772063068489_0001` |
-| 5 | YARN allocates containers | `hadoop-logs/rm-audit.log` | `OPERATION=AM Allocated Container CONTAINERID=container_... RESOURCE=<memory:1024, vCores:1>` |
-| 6 | Application Master registers | `hadoop-logs/rm-audit.log` | `OPERATION=Register App Master TARGET=ApplicationMasterService RESULT=SUCCESS APPID=...` |
-| 7 | Job completes, containers released | `hadoop-logs/rm-audit.log` | `OPERATION=AM Released Container ...` then `OPERATION=Application Finished - Succeeded` |
-| 8 | Spark driver logs completion | `spark-logs/spark-audit.log` | `INFO DAGScheduler: Job 0 finished` and `INFO SparkContext: Successfully stopped SparkContext` |
+| 1 | spark-submit starts, driver initialises | `logs/spark-audit.log` | `[spark-client][Audit][Spark] 26/02/26 00:00:34 INFO SparkContext: Running Spark version 3.5.6` |
+| 2 | Application name and submission | `logs/spark-audit.log` | `[spark-client][Audit][Spark] 26/02/26 00:00:34 INFO SparkContext: Submitted application: Spark Pi` |
+| 3 | Spark uploads JARs to HDFS | `logs/hdfs-audit-*.log` | `allowed=true ugi=spark cmd=create src=/user/spark/.sparkStaging/... proto=rpc` |
+| 4 | YARN receives submit request | `logs/rm-audit.log` | `USER=spark IP=172.18.0.5 OPERATION=Submit Application Request TARGET=ClientRMService RESULT=SUCCESS APPID=application_1772063068489_0001` |
+| 5 | YARN allocates containers | `logs/rm-audit.log` | `OPERATION=AM Allocated Container CONTAINERID=container_... RESOURCE=<memory:1024, vCores:1>` |
+| 6 | Application Master registers | `logs/rm-audit.log` | `OPERATION=Register App Master TARGET=ApplicationMasterService RESULT=SUCCESS APPID=...` |
+| 7 | Job completes, containers released | `logs/rm-audit.log` | `OPERATION=AM Released Container ...` then `OPERATION=Application Finished - Succeeded` |
+| 8 | Spark driver logs completion | `logs/spark-audit.log` | `INFO DAGScheduler: Job 0 finished` and `INFO SparkContext: Successfully stopped SparkContext` |
 
 ### SIEM / Correlation
 
@@ -38,13 +38,13 @@ This document describes **concrete scenarios**: what happens when users and syst
 
 | Component | Log File | What You See |
 |-----------|----------|--------------|
-| NameNode | `hadoop-logs/hadoop.log` (or namenode-specific) | Startup messages, loading fsimage, entering safe mode, leaving safe mode |
-| DataNode | `hadoop-logs/hadoop.log` | Registering with NameNode, block reports |
-| ResourceManager | `hadoop-logs/hadoop.log` | Starting services, recovering state |
-| NodeManager | `hadoop-logs/hadoop.log` | Registering with ResourceManager |
-| JobHistoryServer | `hadoop-logs/hadoop.log` | Starting web server on 19888 |
-| Spark History Server | `spark-logs/spark-audit.log` or History Server stdout | Scanning HDFS for event logs |
-| spark-client | `spark-logs/` | No logs until a job is submitted |
+| NameNode | `logs/hadoop.log` (or namenode-specific) | Startup messages, loading fsimage, entering safe mode, leaving safe mode |
+| DataNode | `logs/hadoop.log` | Registering with NameNode, block reports |
+| ResourceManager | `logs/hadoop.log` | Starting services, recovering state |
+| NodeManager | `logs/hadoop.log` | Registering with ResourceManager |
+| JobHistoryServer | `logs/hadoop.log` | Starting web server on 19888 |
+| Spark History Server | `logs/spark-audit.log` or History Server stdout | Scanning HDFS for event logs |
+| spark-client | `logs/` | No logs until a job is submitted |
 
 ### Healthcheck Logs (UI Access)
 
@@ -52,15 +52,34 @@ Docker healthchecks `curl` the web UIs every 30 seconds. You will see:
 
 | Log File | Example |
 |----------|---------|
-| `hadoop-logs/jetty-namenode.log` | `[][Access][NNDRFA] 127.0.0.1 - - [26/Feb/2026:00:00:11 +0000] "GET / HTTP/1.1" 302 0 "-" "curl/8.5.0"` |
-| `hadoop-logs/jetty-resourcemanager.log` | Similar `GET /` from curl |
-| `hadoop-logs/jetty-datanode.log` | Similar |
-| `hadoop-logs/jetty-jobhistory.log` | Similar |
-| `hadoop-logs/jetty-nodemanager.log` | Similar |
+| `logs/jetty-namenode.log` | `[][Access][NNDRFA] 127.0.0.1 - - [26/Feb/2026:00:00:11 +0000] "GET / HTTP/1.1" 302 0 "-" "curl/8.5.0"` |
+| `logs/jetty-resourcemanager.log` | Similar `GET /` from curl |
+| `logs/jetty-datanode.log` | Similar |
+| `logs/jetty-jobhistory.log` | Similar |
+| `logs/jetty-nodemanager.log` | Similar |
 
 ### Shutdown
 
 On `docker compose down`, daemons stop. Logs may show "Shutting down" or similar. There is no dedicated shutdown audit in this setup; container exit is the signal.
+
+---
+
+## Scenario 2b: MapReduce Job Submission (when MapReduce audit enabled)
+
+**What happens:** A MapReduce job is submitted (e.g. `yarn jar hadoop-mapreduce-examples.jar wordcount`). JobHistoryServer records job lifecycle in `hs-audit.log` — **only when MapReduce audit is enabled** (see [LOGGING_TOGGLES.md](LOGGING_TOGGLES.md)).
+
+### Log Location
+
+`logs/hs-audit.log` (created only when `-Dmapreduce.hs.audit.logger=INFO` is set for JobHistoryServer)
+
+### Example Entries
+
+- Job submission, job completion, job kill requests
+- Format similar to rm-audit: `[hostname][Audit][HSAUDIT]` with job ID, user, operation
+
+### Enabling
+
+Uncomment the MapReduce audit line in `hadoop-conf/mapred-env.sh` and restart jobhistoryserver.
 
 ---
 
@@ -70,7 +89,7 @@ On `docker compose down`, daemons stop. Logs may show "Shutting down" or similar
 
 ### Log Location
 
-`hadoop-logs/hdfs-audit-<hostname>.log` (e.g. `hdfs-audit-namenode.log` or `hdfs-audit-.log` if hostname is empty)
+`logs/hdfs-audit-<hostname>.log` (e.g. `hdfs-audit-namenode.log` or `hdfs-audit-.log` if hostname is empty)
 
 ### Example Entries
 
@@ -99,12 +118,12 @@ On `docker compose down`, daemons stop. Logs may show "Shutting down" or similar
 
 | UI | Log File | Format |
 |----|----------|--------|
-| YARN ResourceManager (8088) | `hadoop-logs/jetty-resourcemanager.log` | NCSA-style access log |
-| Spark History (18080) | `spark-logs/jetty-access.log` | `[hostname][Access][JETTY]` |
-| HDFS NameNode (9870) | `hadoop-logs/jetty-namenode.log` | NCSA-style |
-| Job History (19888) | `hadoop-logs/jetty-jobhistory.log` | NCSA-style |
-| NodeManager (8042) | `hadoop-logs/jetty-nodemanager.log` | NCSA-style |
-| Spark Driver (4040, when job runs) | `spark-logs/jetty-access.log` | Same as History |
+| YARN ResourceManager (8088) | `logs/jetty-resourcemanager.log` | NCSA-style access log |
+| Spark History (18080) | `logs/jetty-access.log` | `[hostname][Access][JETTY]` |
+| HDFS NameNode (9870) | `logs/jetty-namenode.log` | NCSA-style |
+| Job History (19888) | `logs/jetty-jobhistory.log` | NCSA-style |
+| NodeManager (8042) | `logs/jetty-nodemanager.log` | NCSA-style |
+| Spark Driver (4040, when job runs) | `logs/jetty-access.log` | Same as History |
 
 ### Example Entry
 
@@ -128,8 +147,8 @@ On `docker compose down`, daemons stop. Logs may show "Shutting down" or similar
 | Where | What You See |
 |-------|--------------|
 | **Terminal stdout** | `Permission denied: user=spark, access=WRITE, inode="/user/spark"` |
-| **spark-logs/spark-audit.log** | `WARN` or `ERROR` with stack trace mentioning `PermissionDeniedException` |
-| **hadoop-logs/hdfs-audit-*.log** | `allowed=false` for the create operation, or no entry if request fails before reaching NameNode |
+| **logs/spark-audit.log** | `WARN` or `ERROR` with stack trace mentioning `PermissionDeniedException` |
+| **logs/hdfs-audit-*.log** | `allowed=false` for the create operation, or no entry if request fails before reaching NameNode |
 
 ### Remediation
 
@@ -150,8 +169,8 @@ docker exec -u hdfs spark-hadoop-namenode-1 hdfs dfs -chmod -R 777 /user /spark-
 
 | Component | Log File | What You See |
 |-----------|----------|--------------|
-| Spark client | `spark-logs/spark-audit.log` | `ERROR` or `WARN` — "Connection refused", "Failed to connect", "ApplicationMaster not registered" |
-| YARN | `hadoop-logs/` | Last entries before crash; no new entries after restart |
+| Spark client | `logs/spark-audit.log` | `ERROR` or `WARN` — "Connection refused", "Failed to connect", "ApplicationMaster not registered" |
+| YARN | `logs/` | Last entries before crash; no new entries after restart |
 | Docker | `docker compose logs resourcemanager` | JVM exit, OOM, or exception |
 
 ### Typical Failure Patterns
@@ -170,14 +189,14 @@ docker exec -u hdfs spark-hadoop-namenode-1 hdfs dfs -chmod -R 777 /user /spark-
 
 | Issue | Log Location | Typical Message |
 |-------|--------------|-----------------|
-| DataNode disk full | `hadoop-logs/hadoop.log` (or datanode-specific) | "No space left on device", "Disk full" |
-| NodeManager OOM | `hadoop-logs/` | JVM exit, `OutOfMemoryError` |
-| YARN container OOM | `hadoop-logs/` | Container killed, `exit code 137` (OOM kill) |
-| hadoop-metrics2 | `hadoop-logs/*-metrics.out` | `DiskUsage`, `MemUsed` values |
+| DataNode disk full | `logs/hadoop.log` (or datanode-specific) | "No space left on device", "Disk full" |
+| NodeManager OOM | `logs/` | JVM exit, `OutOfMemoryError` |
+| YARN container OOM | `logs/` | Container killed, `exit code 137` (OOM kill) |
+| hadoop-metrics2 | `logs/*-metrics.out` | `DiskUsage`, `MemUsed` values |
 
 ### Metrics
 
-- **hadoop-metrics2:** `hadoop-logs/namenode-metrics.out`, `datanode-metrics.out`, `nodemanager-metrics.out` — contain disk and memory metrics (if enabled)
+- **hadoop-metrics2:** `logs/namenode-metrics.out`, `datanode-metrics.out`, `nodemanager-metrics.out` — contain disk and memory metrics (if enabled)
 - **Prometheus:** `http://localhost:4040/metrics/prometheus` (driver) or `http://localhost:18080/metrics/prometheus` (History Server) when job is running
 
 ---
@@ -206,7 +225,7 @@ docker exec -u hdfs spark-hadoop-namenode-1 hdfs dfs -chmod -R 777 /user /spark-
 
 | Log File | What You See |
 |----------|--------------|
-| `hadoop-logs/hdfs-audit-*.log` | `ugi=hdfs (auth:SIMPLE) cmd=...` — all operations show `hdfs` as user |
+| `logs/hdfs-audit-*.log` | `ugi=hdfs (auth:SIMPLE) cmd=...` — all operations show `hdfs` as user |
 
 ### Example
 
@@ -220,9 +239,9 @@ allowed=true ugi=hdfs (auth:SIMPLE) ip=/172.18.0.5 cmd=mkdir src=/user/spark dst
 
 | Log File | Scenario |
 |----------|----------|
-| `spark-logs/spark-audit.log` | Program initiation (Spark), job lifecycle, errors |
-| `hadoop-logs/rm-audit.log` | Program initiation (YARN), who submitted, when started/ended |
-| `hadoop-logs/hdfs-audit-*.log` | HDFS CRUD, privileged user |
-| `hadoop-logs/jetty-*.log` | UI access, startup healthchecks |
-| `spark-logs/jetty-access.log` | Spark UI access |
-| `hadoop-logs/hadoop.log` (or daemon-specific) | Startup, shutdown, errors, OOM |
+| `logs/spark-audit.log` | Program initiation (Spark), job lifecycle, errors |
+| `logs/rm-audit.log` | Program initiation (YARN), who submitted, when started/ended |
+| `logs/hdfs-audit-*.log` | HDFS CRUD, privileged user |
+| `logs/jetty-*.log` | UI access, startup healthchecks |
+| `logs/jetty-access.log` | Spark UI access |
+| `logs/hadoop.log` (or daemon-specific) | Startup, shutdown, errors, OOM |

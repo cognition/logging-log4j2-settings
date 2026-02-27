@@ -21,6 +21,6 @@ docker exec "$CONTAINER" /opt/spark/bin/spark-submit \
   10
 
 echo "---"
-echo "Done. Check spark-logs/ and hadoop-logs/ for user and job in logs."
+echo "Done. Check logs/ for user and job in logs."
 echo "YARN UI: http://localhost:8088"
 echo "Spark History: http://localhost:18080"

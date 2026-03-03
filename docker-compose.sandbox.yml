@@ -1,13 +1,6 @@
-# Docker Compose using only official Apache images.
-# Hadoop: apache/hadoop:3.4  |  Spark: apache/spark:3.5.6  |  Hive: apache/hive:4.0.0
-#
-# Ensure hadoop-conf contains core-site.xml and hdfs-site.xml (and optionally
-# mapred-site.xml, yarn-site.xml) so HDFS/YARN can find namenode and resourcemanager.
-# See docs or Apache Hadoop documentation for cluster configuration.
-
 version: "3.9"
 
-name: hadoop-logging-apache
+name: hadoop-logging
 
 services:
   log-init:
@@ -31,51 +24,45 @@ services:
     restart: "no"
 
   namenode:
-    image: apache/hadoop:3.4
+    image: ghcr.io/hadoop-sandbox/hadoop-hdfs-namenode:latest
     hostname: namenode
-    user: "0"
     init: true
     restart: always
-    working_dir: /opt/hadoop
-    command:
-      - /bin/bash
-      - -c
-      - |
-        if [ ! -f /opt/hadoop/dfs/name/current/VERSION ]; then
-          echo "Formatting NameNode (first run or empty volume)..."
-          bin/hdfs namenode -format -force
-        fi
-        exec bin/hdfs namenode
-    ports:
-      - "9870:9870"
     volumes:
-      - ./hadoop-conf:/opt/hadoop/etc/hadoop:ro
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
       - ./logs/namenode:/logs
-      - namenode:/opt/hadoop/dfs/name
+      - namenode:/data
     environment:
-      HADOOP_CONF_DIR: /opt/hadoop/etc/hadoop
       LOG_DIR: /logs
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2.properties"
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
     depends_on:
       log-init:
         condition: service_completed_successfully
 
   datanode:
-    image: apache/hadoop:3.4
+    image: ghcr.io/hadoop-sandbox/hadoop-hdfs-datanode:latest
     hostname: hadoopnode
-    user: "0"
     init: true
     restart: always
     ipc: shareable
-    working_dir: /opt/hadoop
-    command: ["bin/hdfs", "datanode"]
     volumes:
-      - ./hadoop-conf:/opt/hadoop/etc/hadoop:ro
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
       - ./logs/hadoopnode:/logs
-      - hadoopnode:/opt/hadoop/dfs/data
+      - hadoopnode:/data
       - dnsocket:/run/hadoop-hdfs
     environment:
-      HADOOP_CONF_DIR: /opt/hadoop/etc/hadoop
       LOG_DIR: /logs
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2.properties"
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
     depends_on:
       log-init:
         condition: service_completed_successfully
@@ -83,21 +70,23 @@ services:
         condition: service_started
 
   resourcemanager:
-    image: apache/hadoop:3.4
+    image: ghcr.io/hadoop-sandbox/hadoop-yarn-resourcemanager:latest
     hostname: resourcemanager
-    user: "0"
     init: true
     restart: always
-    working_dir: /opt/hadoop
-    command: ["bin/yarn", "resourcemanager"]
     ports:
       - "8088:8088"
     volumes:
-      - ./hadoop-conf:/opt/hadoop/etc/hadoop:ro
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
       - ./logs/resourcemanager:/logs
     environment:
-      HADOOP_CONF_DIR: /opt/hadoop/etc/hadoop
       LOG_DIR: /logs
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2.properties"
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
     depends_on:
       log-init:
         condition: service_completed_successfully
@@ -105,22 +94,30 @@ services:
         condition: service_started
 
   nodemanager:
-    image: apache/hadoop:3.4
-    user: "0"
+    image: ghcr.io/hadoop-sandbox/hadoop-yarn-nodemanager-spark:latest
+    hostname: hadoopnode
     init: true
     restart: always
     network_mode: service:datanode
     ipc: service:datanode
-    working_dir: /opt/hadoop
-    command: ["bin/yarn", "nodemanager"]
+    security_opt:
+      - seccomp:unconfined
+    cap_add:
+      - SYS_ADMIN
+      - SYSLOG
     volumes:
-      - ./hadoop-conf:/opt/hadoop/etc/hadoop:ro
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
       - ./logs/hadoopnode:/logs
-      - hadoopnode:/opt/hadoop/dfs/data
+      - hadoopnode:/data
       - dnsocket:/run/hadoop-hdfs
     environment:
-      HADOOP_CONF_DIR: /opt/hadoop/etc/hadoop
       LOG_DIR: /logs
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2.properties"
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
     depends_on:
       namenode:
         condition: service_started
@@ -130,21 +127,23 @@ services:
         condition: service_started
 
   jobhistoryserver:
-    image: apache/hadoop:3.4
+    image: ghcr.io/hadoop-sandbox/hadoop-mapred-jobhistoryserver:latest
     hostname: jobhistoryserver
-    user: "0"
     init: true
     restart: always
-    working_dir: /opt/hadoop
-    command: ["bin/mapred", "historyserver"]
     ports:
       - "19888:19888"
     volumes:
-      - ./hadoop-conf:/opt/hadoop/etc/hadoop:ro
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
       - ./logs/jobhistoryserver:/logs
     environment:
-      HADOOP_CONF_DIR: /opt/hadoop/etc/hadoop
       LOG_DIR: /logs
+      HADOOP_OPTS: "-Dlog4j.configurationFile=file:/hadoop/etc/hadoop/log4j2.properties"
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
     depends_on:
       namenode:
         condition: service_started
@@ -168,10 +167,13 @@ services:
       SPARK_CONF_DIR: /opt/spark/conf
       HADOOP_CONF_DIR: /opt/spark/conf/hadoop
       LOG_DIR: /logs
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
     command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.history.HistoryServer"]
     depends_on:
-      bootstrap:
-        condition: service_completed_successfully
       namenode:
         condition: service_started
       resourcemanager:
@@ -196,6 +198,11 @@ services:
       SPARK_CONF_DIR: /opt/spark/conf
       HADOOP_CONF_DIR: /opt/spark/conf/hadoop
       LOG_DIR: /logs
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
 
   hive-metastore:
     image: apache/hive:4.0.0
@@ -210,6 +217,11 @@ services:
       LOG_DIR: /logs
       HIVE_CONF_DIR: /opt/hive/conf
       SERVICE_NAME: metastore
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
     depends_on:
       namenode:
         condition: service_started
@@ -229,34 +241,30 @@ services:
       LOG_DIR: /logs
       HIVE_CONF_DIR: /opt/hive/conf
       SERVICE_NAME: hiveserver2
-      SERVICE_OPTS: "-Dhive.metastore.uris=thrift://hive-metastore:9083"
-      IS_RESUME: "true"
+      LOG_TAG_APPLICATION: ""
+      LOG_TAG_ACTION: ""
+      LOG_TAG_SECURITY: ""
+      LOG_TAG_CUSTOM: ""
+      LOG_TAG_HOSTNAME: ""
     depends_on:
       hive-metastore:
         condition: service_started
 
   bootstrap:
-    image: apache/hadoop:3.4
+    image: ghcr.io/hadoop-sandbox/hadoop-hdfs-namenode:latest
     hostname: bootstrap
-    user: "0"
+    user: hdfs
     init: true
     restart: "no"
-    working_dir: /opt/hadoop
+    volumes:
+      - ./hadoop-conf:/hadoop/etc/hadoop:ro
     entrypoint: ["/bin/bash", "-c"]
     command:
       - >
-        for i in $(seq 1 60); do
-          if bin/hdfs dfs -ls / >/dev/null 2>&1; then break; fi;
-          echo "Waiting for HDFS... ($i/60)"; sleep 5;
-        done
-        && bin/hdfs dfs -mkdir -p /spark-history /user/root /user/spark /user/hive/warehouse
-        && bin/hdfs dfs -chmod -R 777 /user /spark-history /user/hive
-        && echo "Bootstrap done."
-        || (echo "Bootstrap failed."; exit 1)
-    volumes:
-      - ./hadoop-conf:/opt/hadoop/etc/hadoop:ro
-    environment:
-      HADOOP_CONF_DIR: /opt/hadoop/etc/hadoop
+        hdfs dfs -mkdir -p /spark-history /user/root /user/spark /user/hive/warehouse
+        && hdfs dfs -chmod -R 777 /user /spark-history /user/hive
+        || true;
+        exit 0
     depends_on:
       namenode:
         condition: service_started
@@ -266,23 +274,21 @@ services:
         condition: service_completed_successfully
 
   hdfs-log-sync:
-    image: apache/hadoop:3.4
+    image: apache/spark:3.5.6
     hostname: hdfs-log-sync
     init: true
     restart: unless-stopped
-    working_dir: /opt/hadoop
     volumes:
-      - ./hadoop-conf:/opt/hadoop/etc/hadoop:ro
+      - ./hadoop-conf:/opt/spark/conf/hadoop:ro
       - ./logs:/logs
       - ./scripts:/scripts:ro
     environment:
-      HADOOP_CONF_DIR: /opt/hadoop/etc/hadoop
-      HADOOP_BIN: /opt/hadoop/bin/hdfs
+      HADOOP_CONF_DIR: /opt/spark/conf/hadoop
       HDFS_LOG_DIR: /tmp/logs
       OUTPUT_DIR: /logs/hdfs-container-logs
     entrypoint: ["/bin/bash", "-c"]
     command:
-      - "while true; do bash /scripts/sync-hdfs-logs-to-local.sh; sleep 300; done"
+      - "while true; do /scripts/sync-hdfs-logs-to-local.sh; sleep 300; done"
     depends_on:
       bootstrap:
         condition: service_completed_successfully
@@ -293,3 +299,4 @@ volumes:
   dnsocket:
   hadoopnode:
   namenode:
+

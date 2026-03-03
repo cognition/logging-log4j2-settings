@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Minimal Capacity Scheduler for docker-compose (root + default queue). -->
+<configuration>
+  <property>
+    <name>yarn.scheduler.capacity.root.queues</name>
+    <value>default</value>
+    <description>Child queues under root.</description>
+  </property>
+  <property>
+    <name>yarn.scheduler.capacity.root.default.capacity</name>
+    <value>100</value>
+    <description>Default queue target capacity (percent).</description>
+  </property>
+  <property>
+    <name>yarn.scheduler.capacity.root.default.maximum-capacity</name>
+    <value>100</value>
+    <description>Default queue maximum capacity (percent).</description>
+  </property>
+  <property>
+    <name>yarn.scheduler.capacity.root.default.user-limit-factor</name>
+    <value>1</value>
+    <description>Per-user limit factor for default queue.</description>
+  </property>
+</configuration>

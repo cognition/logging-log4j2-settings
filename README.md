@@ -15,14 +15,25 @@ The primary goal is to learn and demonstrate how to instrument and collect logs 
 
 ## Quick Start (Docker Compose)
 
-```bash
-# 1. Start the cluster
-docker compose up -d
+**Default stack** (uses third-party Hadoop images):
 
-# 2. Submit a Spark job
+```bash
+docker compose up -d
+```
+
+**Apache-only stack** (only `apache/hadoop`, `apache/spark`, `apache/hive`):
+
+```bash
+docker compose -f docker-compose.apache.yml up -d
+```
+
+Then:
+
+```bash
+# Submit a Spark job
 ./scripts/test-spark-yarn.sh
 
-# 3. Inspect logs (files and docker logs should match)
+# Inspect logs (files and docker logs should match)
 ls logs/
 docker compose logs namenode
 ```

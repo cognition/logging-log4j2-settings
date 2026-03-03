@@ -5,8 +5,6 @@
 # mapred-site.xml, yarn-site.xml) so HDFS/YARN can find namenode and resourcemanager.
 # See docs or Apache Hadoop documentation for cluster configuration.
 
-version: "3.9"
-
 name: hadoop-logging-apache
 
 services:
@@ -249,7 +247,8 @@ services:
           if bin/hdfs dfs -ls / >/dev/null 2>&1; then break; fi;
           echo "Waiting for HDFS... ($i/60)"; sleep 5;
         done
-        && bin/hdfs dfs -mkdir -p /spark-history /user/root /user/spark /user/hive/warehouse
+        && bin/hdfs dfs -mkdir -p /tmp /spark-history /user/root /user/spark /user/hive/warehouse
+        && bin/hdfs dfs -chmod 1777 /tmp
         && bin/hdfs dfs -chmod -R 777 /user /spark-history /user/hive
         && echo "Bootstrap done."
         || (echo "Bootstrap failed."; exit 1)
